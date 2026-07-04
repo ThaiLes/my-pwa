@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Provision Asset Dashboard</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        /* Base Reset & Industrial Dark Theme */
+        body {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            background-color: #1a1c20;
+            color: #e2e4e9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Mobile App Container Layout */
+        .app-container {
+            width: 100%;
+            max-width: 412px; 
+            background: linear-gradient(180deg, #24272d 0%, #17181c 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            border-left: 1px solid #2d3139;
+            border-right: 1px solid #2d3139;
+        }
+
+        /* Top Navigation Header Bar */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #2d3139;
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: #8a929e;
+            flex-shrink: 0;
+        }
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-text {
+            color: #e2e4e9;
+            font-weight: bold;
+        }
+
+        /* Form Content Layout Container */
+        .content {
+            padding: 24px 20px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        /* Core Section Typography Titles */
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 12px 0;
+            color: #ffffff;
+        }
+        .divider {
+            height: 1px;
+            background-color: #2d3139;
+            margin-bottom: 28px;
+        }
+        .section-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #6c7380;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            margin-top: 24px;
+        }
+
+        /* Interactive Scanning Data Field Box */
+        .data-display-box {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px dashed #525866;
+            border-radius: 6px;
+            padding: 16px;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            color: #ff9e22; /* Warning orange color to show action needed */
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .data-display-box.scanned {
+            border-style: solid;
+            border-color: #30d158; /* Green border when filled */
+            color: #ffffff;
+            background-color: rgba(48, 209, 88, 0.05);
+        }
+        .highlight-text {
+            color: #30d158;
+            font-weight: bold;
+        }
+
+        /* Video Scanner Viewport Container */
+        #scanner-container {
+            display: none; /* Hidden until user taps the box */
+            width: 100%;
+            background-color: #000000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 12px;
+            border: 1px solid #3f4450;
+        }
+        #interactive-video {
+            width: 100% !important;
+        }
+
+        /* Interactive Select Dropdowns */
+        .select-wrapper {
+            position: relative;
+        }
+        .select-input {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid #3f4450;
+            border-radius: 6px;
+            padding: 14px;
+            font-family: inherit;
+            font-size: 16px;
+            color: #ffffff;
+            appearance: none;
+            -webkit-appearance: none;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .select-wrapper::after {
+            content: '▼';
+            font-size: 10px;
+            color: #6c7380;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        /* System Configuration Radio Form Controls */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            color: #e2e4e9;
+        }
+        .radio-input {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #525866;
+            border-radius: 50%;
+            background-color: transparent;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+        }
+        .radio-input::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: 110ms transform ease-in-out;
+            background-color: #ffffff;
+        }
+        .radio-input:checked {
+            border-color: #ffffff;
+        }
+        .radio-input:checked::before {
+            transform: scale(1);
+        }
+
+        /* Main Industrial Action Button */
+        .bottom-actions {
+            padding: 20px 20px 60px 20px;
+            border-top: 1px solid #2d3139;
+            background-color: #17181c;
+            flex-shrink: 0;
+        }
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(180deg, #4e535e 0%, #33373f 100%);
+            border: 1px solid #525866;
+            border-radius: 6px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .btn-primary:active {
+            background: linear-gradient(180deg, #33373f 0%, #24272d 100%);
+        }
+        .star-icon {
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="header-bar">
+            <div class="header-left">
+                <span>[⌂]</span>
+                <span class="nav-text">ADMIN ADM</span>
+            </div>
+            <div class="header-right">
+                <span>[👤]</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <h1 class="page-title">Provision Asset</h1>
+            <div class="divider"></div>
+
+            <div class="section-label">Hardware Identifier</div>
+            <div id="id-display-box" class="data-display-box" onclick="startScanning()">
+                [ TAP TO SCAN QR CODE ]
+            </div>
+
+            <div id="scanner-container">
+                <div id="interactive-video"></div>
+            </div>
+
+            <div class="section-label">Assign Physical Location</div>
+            <div class="select-wrapper">
+                <select class="select-input">
+                    <option value="" disabled selected>[ Select Berth ]</option>
+                    <option value="1">Berth 1</option>
+                    <option value="2">Berth 2</option>
+                    <option value="3">Berth 3</option>
+                    <option value="4">Berth 4</option>
+                    <option value="5">Berth 5</option>
+                    <option value="6">Berth 6</option>
+                    <option value="7">Berth 7</option>
+                    <option value="8">Berth 8</option>
+                    <option value="9">Berth 9</option>
+                    <option value="10">Berth 10</option>
+                    <option value="11">Berth 11</option>
+                    <option value="12">Berth 12</option>
+                    <option value="13">Berth 13</option>
+                    <option value="14">Berth 14</option>
+                    <option value="15">Berth 15</option>
+                    <option value="16">Berth 16</option>
+                    <option value="17">Berth 17</option>
+                    <option value="18">Berth 18</option>
+                    <option value="19">Berth 19</option>
+                    <option value="20">Berth 20</option>
+                </select>
+            </div>
+
+            <div class="section-label">Utility Type Configuration</div>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="utility" class="radio-input" checked>
+                    ) Water Meter
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="utility" class="radio-input">
+                    ) Shore Electricity
+                </label>
+            </div>
+        </div>
+
+        <div class="bottom-actions">
+            <button class="btn-primary">
+                Activate Generic Asset <span class="star-icon">✦</span>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        let html5QrcodeScanner = null;
+
+        function startScanning() {
+            const displayBox = document.getElementById('id-display-box');
+            const scannerContainer = document.getElementById('scanner-container');
+            
+            // Show the camera container element
+            scannerContainer.style.display = 'block';
+            displayBox.innerText = "[ ACQUIRING CAMERA... ]";
+
+            // Small 300ms delay to give Chrome Mobile time to render the DOM container cleanly
+            setTimeout(() => {
+                // Initialize the scanner core instance targeting the back camera
+                html5QrcodeScanner = new Html5Qrcode("interactive-video");
+                
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" }, // Target the rear lens
+                    {
+                        fps: 10,                 
+                        qrbox: { width: 250, height: 250 } 
+                    },
+                    (decodedText) => {
+                        // Success handling loop when QR is detected
+                        displayBox.innerText = `[ SCANNED ID = ${decodedText} ]`;
+                        displayBox.classList.add('scanned');
+                        
+                        // Turn off camera view and wrap up session parameters cleanly
+                        stopScanning();
+                    },
+                    (errorMessage) => {
+                        // Quietly retry frames
+                    }
+                ).catch(err => {
+                    displayBox.innerText = "[ ERROR: CAMERA INITIALIZATION FAILED ]";
+                    scannerContainer.style.display = 'none';
+                    console.error("Camera access failed", err);
+                });
+            }, 300); // 300 milliseconds delay
+        }
+    </script>
+</body>
+</html>
