@@ -94,25 +94,21 @@
             padding: 16px;
             font-size: 15px;
             letter-spacing: 0.5px;
-            color: #ff9e22; /* Warning orange color to show action needed */
+            color: #ff9e22; 
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
         }
         .data-display-box.scanned {
             border-style: solid;
-            border-color: #30d158; /* Green border when filled */
+            border-color: #30d158; 
             color: #ffffff;
             background-color: rgba(48, 209, 88, 0.05);
-        }
-        .highlight-text {
-            color: #30d158;
-            font-weight: bold;
         }
 
         /* Video Scanner Viewport Container */
         #scanner-container {
-            display: none; /* Hidden until user taps the box */
+            display: none; 
             width: 100%;
             background-color: #000000;
             border-radius: 8px;
@@ -198,7 +194,7 @@
 
         /* Main Industrial Action Button */
         .bottom-actions {
-            padding: 20px 20px 60px 20px;
+            padding: 20px 20px 60px 20px; 
             border-top: 1px solid #2d3139;
             background-color: #17181c;
             flex-shrink: 0;
@@ -313,38 +309,70 @@
             const displayBox = document.getElementById('id-display-box');
             const scannerContainer = document.getElementById('scanner-container');
             
-            // Show the camera container element
             scannerContainer.style.display = 'block';
             displayBox.innerText = "[ ACQUIRING CAMERA... ]";
 
-            // Small 300ms delay to give Chrome Mobile time to render the DOM container cleanly
+            if (html5QrcodeScanner) {
+                try { html5QrcodeScanner.clear(); } catch(e){}
+            }
+
             setTimeout(() => {
-                // Initialize the scanner core instance targeting the back camera
                 html5QrcodeScanner = new Html5Qrcode("interactive-video");
                 
-                html5QrcodeScanner.start(
-                    { facingMode: "environment" }, // Target the rear lens
-                    {
-                        fps: 10,                 
-                        qrbox: { width: 250, height: 250 } 
+                const cameraConfig = {
+                    fps: 10,
+                    qrbox: function(viewfinderWidth, viewfinderHeight) {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const edgeSize = Math.floor(minEdge * 0.65);
+                        return { width: edgeSize, height: edgeSize };
                     },
+                    videoConstraints: {
+                        facingMode: "environment",
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                };
+
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" }, 
+                    cameraConfig,
                     (decodedText) => {
-                        // Success handling loop when QR is detected
                         displayBox.innerText = `[ SCANNED ID = ${decodedText} ]`;
                         displayBox.classList.add('scanned');
-                        
-                        // Turn off camera view and wrap up session parameters cleanly
                         stopScanning();
                     },
                     (errorMessage) => {
-                        // Quietly retry frames
+                        // Frame skip handler
                     }
                 ).catch(err => {
-                    displayBox.innerText = "[ ERROR: CAMERA INITIALIZATION FAILED ]";
-                    scannerContainer.style.display = 'none';
-                    console.error("Camera access failed", err);
+                    console.warn("Strict config failed, attempting fallback...", err);
+                    
+                    html5QrcodeScanner.start(
+                        { facingMode: "environment" },
+                        { fps: 10, qrbox: 250 },
+                        (decodedText) => {
+                            displayBox.innerText = `[ SCANNED ID = ${decodedText} ]`;
+                            displayBox.classList.add('scanned');
+                            stopScanning();
+                        }
+                    ).catch(fallbackErr => {
+                        displayBox.innerText = "[ ERROR: CAMERA INITIALIZATION FAILED ]";
+                        scannerContainer.style.display = 'none';
+                        console.error(fallbackErr);
+                    });
                 });
-            }, 300); // 300 milliseconds delay
+            }, 300);
+        }
+
+        function stopScanning() {
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('scanner-container').style.display = 'none';
+                }).catch(err => {
+                    console.error(err);
+                    document.getElementById('scanner-container').style.display = 'none';
+                });
+            }
         }
     </script>
 </body>
