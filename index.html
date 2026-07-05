@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Provision Asset Dashboard</title>
+    <!-- Load the lightweight QR Scanning Library via CDN -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         /* Base Reset & Industrial Dark Theme */
@@ -294,6 +295,7 @@
 
     <div class="app-container">
         
+        <!-- Header Nav -->
         <div class="header-bar">
             <div class="header-left">
                 <span>[⌂]</span>
@@ -304,15 +306,18 @@
             </div>
         </div>
 
+        <!-- TAB BAR SYSTEM -->
         <div class="tab-navigation">
             <button id="tab-gateway" class="tab-btn active" onclick="switchTab('gateway')">Gateway Configuration</button>
             <button id="tab-asset" class="tab-btn" onclick="switchTab('asset')">Provision Asset</button>
         </div>
 
+        <!-- Global Video Scanner Viewport Container -->
         <div id="scanner-container">
             <div id="interactive-video"></div>
         </div>
 
+        <!-- VIEW 1: GATEWAY CONFIGURATION VIEW PANEL -->
         <div id="view-gateway" class="content view-panel active">
             <h1 class="page-title">Config Gateway</h1>
             <div class="divider"></div>
@@ -338,6 +343,7 @@
             <div id="gateway-log" class="log-area">No active gateway configuration initialized locally.</div>
         </div>
 
+        <!-- VIEW 2: PROVISION ASSET VIEW PANEL -->
         <div id="view-asset" class="content view-panel">
             <h1 class="page-title">Provision Asset</h1>
             <div class="divider"></div>
@@ -349,18 +355,9 @@
 
             <div class="section-label">Assign Physical Location</div>
             <div class="select-wrapper">
+                <!-- Dropdown will be populated dynamically based on total births entry -->
                 <select id="select-berth-id" class="select-input">
                     <option value="" disabled selected>[ Select Berth ]</option>
-                    <option value="1">Berth 1</option>
-                    <option value="2">Berth 2</option>
-                    <option value="3">Berth 3</option>
-                    <option value="4">Berth 4</option>
-                    <option value="5">Berth 5</option>
-                    <option value="6">Berth 6</option>
-                    <option value="7">Berth 7</option>
-                    <option value="8">Berth 8</option>
-                    <option value="9">Berth 9</option>
-                    <option value="10">Berth 10</option>
                 </select>
             </div>
 
@@ -385,6 +382,7 @@
 
     </div>
 
+    <!-- JavaScript Automation Logic Controller -->
     <script>
         let html5QrcodeScanner = null;
         let currentScanTarget = null;
@@ -395,10 +393,10 @@
         // Load existing configuration data log immediately upon app initialization
         window.onload = function() {
             renderLogs();
+            updateBerthDropdown();
         };
 
         function switchTab(targetTab) {
-            // Force clean destruction of camera interface before swapping panels
             if (html5QrcodeScanner && scannableActive) {
                 html5QrcodeScanner.stop().then(() => {
                     scannableActive = false;
@@ -428,9 +426,7 @@
                 document.getElementById('view-asset').classList.add('active');
                 document.getElementById('view-gateway').classList.remove('active');
                 document.getElementById('tab-asset').classList.add('active');
-                document.getElementById('tab-gateway').classList.add('active'); // Keep styling context clean
                 document.getElementById('tab-gateway').classList.remove('active');
-                document.getElementById('tab-asset').classList.add('active');
             }
         }
 
@@ -480,8 +476,6 @@
                             stopScanning();
                         }
                     ).catch(fallbackErr => {
-                        displayBox.innerText = "[ MANUAL ID MOCK INJECTED ]";
-                        // Internal fallback text if lens execution errors occur
                         displayBox.innerText = "GW-TEST-MOCK-ID";
                         displayBox.classList.add('scanned');
                         document.getElementById('scanner-container').style.display = 'none';
@@ -520,10 +514,33 @@
                 timestamp: new Date().toLocaleString()
             };
 
-            // Save straight to phone local tracking ledger database storage
+            // Save straight to phone local memory
             localStorage.setItem("activeGateway", JSON.stringify(configObject));
             renderLogs();
+            updateBerthDropdown(); // Instantly update the asset select loop
             alert(`SUCCESS:\n${marinaName} initialized cleanly with ${berthCount} slots.`);
+        }
+
+        function updateBerthDropdown() {
+            const selectDropdown = document.getElementById('select-berth-id');
+            const savedData = localStorage.getItem("activeGateway");
+            
+            // Clear existing dropdown items except default title choice
+            selectDropdown.innerHTML = '<option value="" disabled selected>[ Select Berth ]</option>';
+            
+            let count = 10; // Default fallback loop limit
+            if (savedData) {
+                const parsed = JSON.parse(savedData);
+                count = parsed.berthCount;
+            }
+            
+            // Dynamically generate loop items for the select object box matching input number
+            for (let i = 1; i <= count; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.innerText = `Berth ${i}`;
+                selectDropdown.appendChild(option);
+            }
         }
 
         function renderLogs() {
