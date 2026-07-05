@@ -87,7 +87,9 @@
             display: none;
         }
         .view-panel.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 95px); /* Constrain inside viewport boundaries */
         }
 
         /* Form Content Layout Container */
@@ -95,6 +97,7 @@
             padding: 24px 20px;
             flex-grow: 1;
             overflow-y: auto;
+            box-sizing: border-box;
         }
 
         /* Core Section Typography Titles */
@@ -109,23 +112,23 @@
         .divider {
             height: 1px;
             background-color: #2d3139;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
         .section-label {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
             color: #6c7380;
             letter-spacing: 1.5px;
             text-transform: uppercase;
             margin-bottom: 8px;
-            margin-top: 24px;
+            margin-top: 20px;
         }
 
-        /* NEW: Action Mode Selection Button Group Layout */
+        /* Action Mode Selection Button Group Layout */
         .mode-button-group {
             display: flex;
             gap: 12px;
-            margin-bottom: 14px;
+            margin-bottom: 6px;
         }
         .mode-btn {
             flex: 1;
@@ -166,7 +169,6 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        /* NEW: Grayed out frozen tracking view mode style */
         .data-display-box.locked {
             border-color: #2d3139;
             color: #4e535e;
@@ -280,7 +282,59 @@
             transform: scale(1);
         }
 
-        /* Local Log Output Area */
+        /* Local Ledger Scrollable List Container Components */
+        .ledger-container {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 1px solid #2d3139;
+            border-radius: 6px;
+            margin-top: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .ledger-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border-bottom: 1px solid #2d3139;
+            font-size: 12px;
+        }
+        .ledger-item:last-child {
+            border-bottom: none;
+        }
+        .ledger-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .ledger-title {
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .ledger-subtitle {
+            color: #8a929e;
+            font-size: 11px;
+        }
+        .ledger-badge {
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .badge-water { background-color: rgba(10, 132, 255, 0.15); color: #0a84ff; }
+        .badge-elec { background-color: rgba(255, 159, 10, 0.15); color: #ff9f0a; }
+        
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #ff453a;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+        }
+
+        /* System Configuration Log Style */
         .log-area {
             background-color: rgba(0, 0, 0, 0.4);
             border: 1px solid #2d3139;
@@ -288,9 +342,7 @@
             padding: 12px;
             font-size: 11px;
             color: #8a929e;
-            margin-top: 20px;
-            max-height: 120px;
-            overflow-y: auto;
+            margin-top: 12px;
             white-space: pre-wrap;
         }
 
@@ -405,11 +457,15 @@
                 </label>
             </div>
 
-            <div style="margin-top: 30px;">
+            <div style="margin-top: 24px;">
                 <button class="btn-primary" onclick="saveAssetProvision()">
                     Activate Generic Asset <span class="star-icon">✦</span>
                 </button>
             </div>
+
+            <div class="section-label">Active Asset Deployment Ledger</div>
+            <div id="asset-ledger-list" class="ledger-container">
+                </div>
         </div>
 
     </div>
@@ -418,8 +474,6 @@
         let html5QrcodeScanner = null;
         let currentScanTarget = null;
         let scannableActive = false;
-        
-        // NEW: State variable tracking active operational deployment selection mode
         let currentOperationMode = null; 
 
         const ADMIN_PIN = "1234"; 
@@ -427,16 +481,15 @@
         window.onload = function() {
             renderLogs();
             updateBerthDropdown();
+            renderAssetLedger();
         };
 
-        // NEW: Unfreezes tracking fields based on selected mode parameter values
         function setOperationMode(mode) {
             currentOperationMode = mode;
             const installBtn = document.getElementById('btn-mode-install');
             const replaceBtn = document.getElementById('btn-mode-replace');
             const scanBox = document.getElementById('asset-display-box');
 
-            // Reset box scanning text styling context state
             scanBox.classList.remove('locked', 'scanned');
             scanBox.innerText = "[ TAP TO SCAN PUCK QR CODE ]";
 
@@ -449,7 +502,6 @@
             }
         }
 
-        // NEW: Block camera activation execution if safety buttons remain untouched
         function handleAssetScanClick() {
             if (!currentOperationMode) {
                 alert("ATTENTION: You must select INSTALL or REPLACE mode before scanning hardware.");
@@ -486,6 +538,7 @@
                 document.getElementById('tab-asset').classList.remove('active');
             } else {
                 updateBerthDropdown();
+                renderAssetLedger();
                 document.getElementById('view-asset').classList.add('active');
                 document.getElementById('view-gateway').classList.remove('active');
                 document.getElementById('tab-asset').classList.add('active');
@@ -539,7 +592,7 @@
                             stopScanning();
                         }
                     ).catch(fallbackErr => {
-                        displayBox.innerText = "PUCK-TEST-MOCK-ID";
+                        displayBox.innerText = "PUCK-" + Math.floor(1000 + Math.random() * 9000);
                         displayBox.classList.add('scanned');
                         document.getElementById('scanner-container').style.display = 'none';
                     });
@@ -612,12 +665,161 @@
             }
         }
 
+        // NEW: IMPLEMENTED CORE ASSET LEDGER PROVISIONING LOGIC
         function saveAssetProvision() {
-            if(!currentOperationMode) {
-                alert("ERROR: Deployment execution mode parameters missing.");
+            const gatewayData = localStorage.getItem("activeGateway");
+            if (!gatewayData) {
+                alert("ERROR: No active Site Gateway provisioned. Initialize a gateway configuration first.");
                 return;
             }
-            alert(`SUCCESS: Asset provision profile registered via ${currentOperationMode} mode mapping.`);
+            const activeGateway = JSON.parse(gatewayData);
+
+            if (!currentOperationMode) {
+                alert("ERROR: Select deployment mode parameter [ INSTALL ] or [ REPLACE ] first.");
+                return;
+            }
+
+            const puckId = document.getElementById('asset-display-box').innerText;
+            if (puckId.includes("SELECT") || puckId.includes("TAP TO SCAN")) {
+                alert("ERROR: No valid PUCK hardware ID scanned.");
+                return;
+            }
+
+            const berthId = document.getElementById('select-berth-id').value;
+            if (!berthId) {
+                alert("ERROR: Please select a target location berth.");
+                return;
+            }
+
+            const utilityType = document.querySelector('input[name="utility"]:checked').value;
+            let currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+
+            // Conflict Rule Check: Scan existing maps
+            const existingAssetIndex = currentLedger.findIndex(item => item.berthId === berthId);
+            const duplicatePuck = currentLedger.find(item => item.puckId === puckId);
+
+            if (duplicatePuck && (currentOperationMode === 'INSTALL' || duplicatePuck.berthId !== berthId)) {
+                alert(`CONFLICT: Hardware ID ${puckId} is already mapped to Berth ${duplicatePuck.berthId}.`);
+                return;
+            }
+
+            // Mode Logic Routing
+            if (currentOperationMode === 'INSTALL') {
+                if (existingAssetIndex !== -1) {
+                    alert(`CONFLICT: Berth ${berthId} is already occupied by ${currentLedger[existingAssetIndex].puckId}.\n\nUse REPLACE mode to perform a hardware swap.`);
+                    return;
+                }
+
+                // Construct clean data record parcel
+                const newAsset = {
+                    gatewayId: activeGateway.gatewayId,
+                    marinaName: activeGateway.marinaName,
+                    berthId: berthId,
+                    puckId: puckId,
+                    utilityType: utilityType,
+                    timestamp: new Date().toLocaleString(),
+                    deploymentMode: "INSTALL"
+                };
+                currentLedger.push(newAsset);
+                
+                // MOCK TRANSMISSION: Simulate the once-off initialization lifecycle alert packet heading to space
+                console.log("ONCE-OFF SYSTEM PACKET TRANSMITTED: ", newAsset);
+                alert(`SUCCESS: Once-off Lifecycle Message Transmitted!\n\nRegistered PUCK ${puckId} as a new initialization on Berth ${berthId}.`);
+
+            } else if (currentOperationMode === 'REPLACE') {
+                if (existingAssetIndex === -1) {
+                    alert(`ERROR: Berth ${berthId} is completely vacant. Use INSTALL mode to provision a fresh asset slot.`);
+                    return;
+                }
+
+                const oldAsset = currentLedger[existingAssetIndex];
+                if (oldAsset.puckId === puckId) {
+                    alert("ERROR: Scanned ID matches the device already sitting on this berth layout.");
+                    return;
+                }
+
+                const confirmSwap = confirm(`🔄 CONFIRM HARDWARE REPLACEMENT?\n\nBerth ${berthId} Allocation:\nOLD: ${oldAsset.puckId}\nNEW: ${puckId}\n\nClicking OK logs the lifecycle change event and resets cloud billing indices.`);
+                
+                if (!confirmSwap) return;
+
+                // Execute the explicit database overwrite operation
+                const replacementAsset = {
+                    gatewayId: activeGateway.gatewayId,
+                    marinaName: activeGateway.marinaName,
+                    berthId: berthId,
+                    puckId: puckId,
+                    utilityType: utilityType,
+                    timestamp: new Date().toLocaleString(),
+                    deploymentMode: "REPLACE",
+                    replacedHardwareId: oldAsset.puckId // Archive historical record context
+                };
+                
+                currentLedger[existingAssetIndex] = replacementAsset;
+
+                // MOCK TRANSMISSION: Send the specialized hardware overwrite notice message to the cloud
+                console.log("ONCE-OFF REPLACEMENT LIFECYCLE PACKET TRANSMITTED: ", replacementAsset);
+                alert(`SUCCESS: Once-off Lifecycle Replacement Alert Transmitted!\n\nOld device ${oldAsset.puckId} archived. New PUCK ${puckId} married to Berth ${berthId}.`);
+            }
+
+            // Save back to browser database memory and rebuild lists
+            localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger));
+            renderAssetLedger();
+            resetAssetForm();
+        }
+
+        // NEW: Renders database arrays dynamically into a scrollable visual badge log list
+        function renderAssetLedger() {
+            const container = document.getElementById('asset-ledger-list');
+            const currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+
+            if (currentLedger.length === 0) {
+                container.innerHTML = '<div style="padding: 16px; text-align: center; color: #4e535e; font-size:11px;">No assets provisioned on this local deployment engine ledger.</div>';
+                return;
+            }
+
+            // Sort array sequentially by physical Berth index order layout
+            currentLedger.sort((a, b) => parseInt(a.berthId) - parseInt(b.berthId));
+
+            container.innerHTML = '';
+            currentLedger.forEach(item => {
+                const badgeClass = item.utilityType === 'Water Meter' ? 'badge-water' : 'badge-elec';
+                const row = document.createElement('div');
+                row.className = 'ledger-item';
+                row.innerHTML = `
+                    <div class="ledger-meta">
+                        <span class="ledger-title">📍 Berth ${item.berthId} &rarr; <span style="color:#ff9e22;">${item.puckId}</span></span>
+                        <span class="ledger-subtitle">Stamping: ${item.timestamp} (${item.deploymentMode})</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="ledger-badge ${badgeClass}">${item.utilityType === 'Water Meter' ? 'Water' : 'Electricity'}</span>
+                        <button class="btn-delete" onclick="deleteAssetRecord('${item.berthId}')">⌫</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // NEW: De-provisioning execution action string via red row backspaces
+        function deleteAssetRecord(berthId) {
+            if (!confirm(`CAUTION: De-provision Berth ${berthId}? This clears its record from the local ledger mapping grid.`)) return;
+            
+            let currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+            currentLedger = currentLedger.filter(item => item.berthId !== berthId);
+            localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger));
+            renderAssetLedger();
+        }
+
+        // NEW: Form interface helper script reset mechanics
+        function resetAssetForm() {
+            currentOperationMode = null;
+            document.getElementById('btn-mode-install').classList.remove('selected-install');
+            document.getElementById('btn-mode-replace').classList.remove('selected-replace');
+            
+            const scanBox = document.getElementById('asset-display-box');
+            scanBox.className = 'data-display-box locked';
+            scanBox.innerText = "[ SELECT INSTALL OR REPLACE MODE ABOVE ]";
+            
+            document.getElementById('select-berth-id').selectedIndex = 0;
         }
     </script>
 </body>
