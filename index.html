@@ -355,7 +355,7 @@
 
             <div class="section-label">Assign Physical Location</div>
             <div class="select-wrapper">
-                <!-- Dropdown will be populated dynamically based on total births entry -->
+                <!-- Dropdown populated dynamically -->
                 <select id="select-berth-id" class="select-input">
                     <option value="" disabled selected>[ Select Berth ]</option>
                 </select>
@@ -390,7 +390,6 @@
 
         const ADMIN_PIN = "1234"; 
 
-        // Load existing configuration data log immediately upon app initialization
         window.onload = function() {
             renderLogs();
             updateBerthDropdown();
@@ -423,6 +422,9 @@
                 document.getElementById('tab-gateway').classList.add('active');
                 document.getElementById('tab-asset').classList.remove('active');
             } else {
+                // FIXED: Force immediate dropdown list rebuild right before the tab view expands
+                updateBerthDropdown();
+                
                 document.getElementById('view-asset').classList.add('active');
                 document.getElementById('view-gateway').classList.remove('active');
                 document.getElementById('tab-asset').classList.add('active');
@@ -514,10 +516,9 @@
                 timestamp: new Date().toLocaleString()
             };
 
-            // Save straight to phone local memory
             localStorage.setItem("activeGateway", JSON.stringify(configObject));
             renderLogs();
-            updateBerthDropdown(); // Instantly update the asset select loop
+            updateBerthDropdown(); 
             alert(`SUCCESS:\n${marinaName} initialized cleanly with ${berthCount} slots.`);
         }
 
@@ -525,16 +526,14 @@
             const selectDropdown = document.getElementById('select-berth-id');
             const savedData = localStorage.getItem("activeGateway");
             
-            // Clear existing dropdown items except default title choice
             selectDropdown.innerHTML = '<option value="" disabled selected>[ Select Berth ]</option>';
             
-            let count = 10; // Default fallback loop limit
+            let count = 10; 
             if (savedData) {
                 const parsed = JSON.parse(savedData);
                 count = parsed.berthCount;
             }
             
-            // Dynamically generate loop items for the select object box matching input number
             for (let i = 1; i <= count; i++) {
                 const option = document.createElement('option');
                 option.value = i;
