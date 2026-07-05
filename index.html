@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Provision Asset Dashboard</title>
-    <!-- Load the lightweight QR Scanning Library via CDN -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         /* Base Reset & Industrial Dark Theme */
@@ -295,7 +294,6 @@
 
     <div class="app-container">
         
-        <!-- Header Nav -->
         <div class="header-bar">
             <div class="header-left">
                 <span>[⌂]</span>
@@ -306,19 +304,16 @@
             </div>
         </div>
 
-        <!-- TAB BAR SYSTEM -->
         <div class="tab-navigation">
-            <button id="tab-gateway" class="tab-btn active" onclick="switchTab('gateway')">Gateway Configuration</button>
-            <button id="tab-asset" class="tab-btn" onclick="switchTab('asset')">Provision Asset</button>
+            <button id="tab-gateway" class="tab-btn" onclick="switchTab('gateway')">Gateway Configuration</button>
+            <button id="tab-asset" class="tab-btn active" onclick="switchTab('asset')">Provision Asset</button>
         </div>
 
-        <!-- Global Video Scanner Viewport Container -->
         <div id="scanner-container">
             <div id="interactive-video"></div>
         </div>
 
-        <!-- VIEW 1: GATEWAY CONFIGURATION VIEW PANEL -->
-        <div id="view-gateway" class="content view-panel active">
+        <div id="view-gateway" class="content view-panel">
             <h1 class="page-title">Config Gateway</h1>
             <div class="divider"></div>
 
@@ -343,8 +338,7 @@
             <div id="gateway-log" class="log-area">No active gateway configuration initialized locally.</div>
         </div>
 
-        <!-- VIEW 2: PROVISION ASSET VIEW PANEL -->
-        <div id="view-asset" class="content view-panel">
+        <div id="view-asset" class="content view-panel active">
             <h1 class="page-title">Provision Asset</h1>
             <div class="divider"></div>
 
@@ -355,7 +349,6 @@
 
             <div class="section-label">Assign Physical Location</div>
             <div class="select-wrapper">
-                <!-- Dropdown populated dynamically -->
                 <select id="select-berth-id" class="select-input">
                     <option value="" disabled selected>[ Select Berth ]</option>
                 </select>
@@ -382,7 +375,6 @@
 
     </div>
 
-    <!-- JavaScript Automation Logic Controller -->
     <script>
         let html5QrcodeScanner = null;
         let currentScanTarget = null;
@@ -422,9 +414,7 @@
                 document.getElementById('tab-gateway').classList.add('active');
                 document.getElementById('tab-asset').classList.remove('active');
             } else {
-                // FIXED: Force immediate dropdown list rebuild right before the tab view expands
                 updateBerthDropdown();
-                
                 document.getElementById('view-asset').classList.add('active');
                 document.getElementById('view-gateway').classList.remove('active');
                 document.getElementById('tab-asset').classList.add('active');
