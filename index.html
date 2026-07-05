@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Provision Asset Dashboard</title>
+    <title>Provision Asset Dashboard V2</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         /* Base Reset & Industrial Dark Theme */
@@ -121,22 +121,36 @@
             margin-top: 24px;
         }
 
-        /* TextInput Fields Layout */
-        .text-input {
-            width: 100%;
+        /* NEW: Action Mode Selection Button Group Layout */
+        .mode-button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
             background-color: rgba(0, 0, 0, 0.2);
             border: 1px solid #3f4450;
             border-radius: 6px;
-            padding: 14px;
+            color: #8a929e;
             font-family: inherit;
-            font-size: 16px;
-            color: #ffffff;
-            box-sizing: border-box;
-            margin-bottom: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
         }
-        .text-input:focus {
+        .mode-btn.selected-install {
+            border-color: #30d158;
+            color: #30d158;
+            background-color: rgba(48, 209, 88, 0.05);
+        }
+        .mode-btn.selected-replace {
             border-color: #ff9e22;
-            outline: none;
+            color: #ff9e22;
+            background-color: rgba(255, 158, 34, 0.05);
         }
 
         /* Interactive Scanning Data Field Box */
@@ -152,11 +166,32 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
+        /* NEW: Grayed out frozen tracking view mode style */
+        .data-display-box.locked {
+            border-color: #2d3139;
+            color: #4e535e;
+            background-color: rgba(0, 0, 0, 0.1);
+            cursor: not-allowed;
+        }
         .data-display-box.scanned {
             border-style: solid;
             border-color: #30d158; 
             color: #ffffff;
             background-color: rgba(48, 209, 88, 0.05);
+        }
+
+        /* TextInput Fields Layout */
+        .text-input {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid #3f4450;
+            border-radius: 6px;
+            padding: 14px;
+            font-family: inherit;
+            font-size: 16px;
+            color: #ffffff;
+            box-sizing: border-box;
+            margin-bottom: 12px;
         }
 
         /* Video Scanner Viewport Container */
@@ -168,8 +203,6 @@
             overflow: hidden;
             margin-top: 12px;
             border: 1px solid #3f4450;
-            padding: 0;
-            box-sizing: border-box;
         }
         #interactive-video {
             width: 100% !important;
@@ -342,9 +375,15 @@
             <h1 class="page-title">Provision Asset</h1>
             <div class="divider"></div>
 
+            <div class="section-label">Select Deployment Mode</div>
+            <div class="mode-button-group">
+                <button id="btn-mode-install" class="mode-btn" onclick="setOperationMode('INSTALL')">Install</button>
+                <button id="btn-mode-replace" class="mode-btn" onclick="setOperationMode('REPLACE')">Replace</button>
+            </div>
+
             <div class="section-label">Hardware Identifier</div>
-            <div id="asset-display-box" class="data-display-box" onclick="startScanning('asset')">
-                [ TAP TO SCAN PUCK QR CODE ]
+            <div id="asset-display-box" class="data-display-box locked" onclick="handleAssetScanClick()">
+                [ SELECT INSTALL OR REPLACE MODE ABOVE ]
             </div>
 
             <div class="section-label">Assign Physical Location</div>
@@ -379,6 +418,9 @@
         let html5QrcodeScanner = null;
         let currentScanTarget = null;
         let scannableActive = false;
+        
+        // NEW: State variable tracking active operational deployment selection mode
+        let currentOperationMode = null; 
 
         const ADMIN_PIN = "1234"; 
 
@@ -386,6 +428,35 @@
             renderLogs();
             updateBerthDropdown();
         };
+
+        // NEW: Unfreezes tracking fields based on selected mode parameter values
+        function setOperationMode(mode) {
+            currentOperationMode = mode;
+            const installBtn = document.getElementById('btn-mode-install');
+            const replaceBtn = document.getElementById('btn-mode-replace');
+            const scanBox = document.getElementById('asset-display-box');
+
+            // Reset box scanning text styling context state
+            scanBox.classList.remove('locked', 'scanned');
+            scanBox.innerText = "[ TAP TO SCAN PUCK QR CODE ]";
+
+            if (mode === 'INSTALL') {
+                installBtn.classList.add('selected-install');
+                replaceBtn.classList.remove('selected-replace');
+            } else if (mode === 'REPLACE') {
+                replaceBtn.classList.add('selected-replace');
+                installBtn.classList.remove('selected-install');
+            }
+        }
+
+        // NEW: Block camera activation execution if safety buttons remain untouched
+        function handleAssetScanClick() {
+            if (!currentOperationMode) {
+                alert("ATTENTION: You must select INSTALL or REPLACE mode before scanning hardware.");
+                return;
+            }
+            startScanning('asset');
+        }
 
         function switchTab(targetTab) {
             if (html5QrcodeScanner && scannableActive) {
@@ -468,7 +539,7 @@
                             stopScanning();
                         }
                     ).catch(fallbackErr => {
-                        displayBox.innerText = "GW-TEST-MOCK-ID";
+                        displayBox.innerText = "PUCK-TEST-MOCK-ID";
                         displayBox.classList.add('scanned');
                         document.getElementById('scanner-container').style.display = 'none';
                     });
@@ -542,7 +613,11 @@
         }
 
         function saveAssetProvision() {
-            alert("SUCCESS: Asset locked down profile cleanly.");
+            if(!currentOperationMode) {
+                alert("ERROR: Deployment execution mode parameters missing.");
+                return;
+            }
+            alert(`SUCCESS: Asset provision profile registered via ${currentOperationMode} mode mapping.`);
         }
     </script>
 </body>
