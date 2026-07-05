@@ -55,6 +55,41 @@
             font-weight: bold;
         }
 
+        /* TAB SYSTEM STYLING */
+        .tab-navigation {
+            display: flex;
+            border-bottom: 1px solid #2d3139;
+            background-color: #1d2025;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 14px;
+            background: none;
+            border: none;
+            color: #6c7380;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            color: #ffffff;
+            background-color: #24272d;
+            border-bottom: 2px solid #ff9e22;
+        }
+
+        /* View Panels Visibility Management */
+        .view-panel {
+            display: none;
+        }
+        .view-panel.active {
+            display: block;
+        }
+
         /* Form Content Layout Container */
         .content {
             padding: 24px 20px;
@@ -86,13 +121,31 @@
             margin-top: 24px;
         }
 
+        /* TextInput Fields Layout */
+        .text-input {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid #3f4450;
+            border-radius: 6px;
+            padding: 14px;
+            font-family: inherit;
+            font-size: 16px;
+            color: #ffffff;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+        .text-input:focus {
+            border-color: #ff9e22;
+            outline: none;
+        }
+
         /* Interactive Scanning Data Field Box */
         .data-display-box {
             background-color: rgba(0, 0, 0, 0.3);
             border: 1px dashed #525866;
             border-radius: 6px;
             padding: 16px;
-            font-size: 15px;
+            font-size: 13px;
             letter-spacing: 0.5px;
             color: #ff9e22; 
             text-align: center;
@@ -206,7 +259,7 @@
             border-radius: 6px;
             color: #ffffff;
             font-family: inherit;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: bold;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -234,24 +287,51 @@
         <div class="header-bar">
             <div class="header-left">
                 <span>[⌂]</span>
-                <span class="nav-text"> ADMIN </span>
+                <span class="nav-text">ADMIN ADM</span>
             </div>
             <div class="header-right">
                 <span>[👤]</span>
             </div>
         </div>
 
-        <div class="content">
+        <div class="tab-navigation">
+            <button id="tab-gateway" class="tab-btn active" onclick="switchTab('gateway')">Gateway Configuration</button>
+            <button id="tab-asset" class="tab-btn" onclick="switchTab('asset')">Provision Asset</button>
+        </div>
+
+        <div id="scanner-container" style="padding: 0 20px; box-sizing: border-box;">
+            <div id="interactive-video"></div>
+        </div>
+
+        <div id="view-gateway" class="content view-panel active">
+            <h1 class="page-title">Config Gateway</h1>
+            <div class="divider"></div>
+
+            <div class="section-label">Scan Gateway Housing</div>
+            <div id="gateway-display-box" class="data-display-box" onclick="startScanning('gateway')">
+                [ TAP TO SCAN GATEWAY QR CODE ]
+            </div>
+
+            <div class="section-label">Marina / Yard Name</div>
+            <input type="text" id="input-marina-name" class="text-input" placeholder="e.g. Daventry Park Marina">
+
+            <div class="section-label">Total Number of Berths</div>
+            <input type="number" id="input-berth-count" class="text-input" placeholder="e.g. 20" min="1" max="100">
+            
+            <div style="margin-top: 30px;">
+                <button class="btn-primary" onclick="saveGatewayConfig()">
+                    Save & Initialize Site <span class="star-icon">✦</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="view-asset" class="content view-panel">
             <h1 class="page-title">Provision Asset</h1>
             <div class="divider"></div>
 
             <div class="section-label">Hardware Identifier</div>
-            <div id="id-display-box" class="data-display-box" onclick="startScanning()">
-                [ TAP TO SCAN QR CODE ]
-            </div>
-
-            <div id="scanner-container">
-                <div id="interactive-video"></div>
+            <div id="asset-display-box" class="data-display-box" onclick="startScanning('asset')">
+                [ TAP TO SCAN PUCK QR CODE ]
             </div>
 
             <div class="section-label">Assign Physical Location</div>
@@ -268,16 +348,6 @@
                     <option value="8">Berth 8</option>
                     <option value="9">Berth 9</option>
                     <option value="10">Berth 10</option>
-                    <option value="11">Berth 11</option>
-                    <option value="12">Berth 12</option>
-                    <option value="13">Berth 13</option>
-                    <option value="14">Berth 14</option>
-                    <option value="15">Berth 15</option>
-                    <option value="16">Berth 16</option>
-                    <option value="17">Berth 17</option>
-                    <option value="18">Berth 18</option>
-                    <option value="19">Berth 19</option>
-                    <option value="20">Berth 20</option>
                 </select>
             </div>
 
@@ -292,25 +362,57 @@
                     ) Shore Electricity
                 </label>
             </div>
-        </div>
 
-        <div class="bottom-actions">
-            <button class="btn-primary">
-                Activate Generic Asset <span class="star-icon">✦</span>
-            </button>
+            <div style="margin-top: 30px;">
+                <button class="btn-primary" onclick="saveAssetProvision()">
+                    Activate Generic Asset <span class="star-icon">✦</span>
+                </button>
+            </div>
         </div>
 
     </div>
 
     <script>
         let html5QrcodeScanner = null;
+        let currentScanTarget = null; // Tracks 'gateway' or 'asset'
 
-        function startScanning() {
-            const displayBox = document.getElementById('id-display-box');
+        // Secure PIN Protection Configuration
+        const ADMIN_PIN = "1234"; 
+
+        function switchTab(targetTab) {
+            // Stop any active camera scanner tracking sessions before switching tabs
+            stopScanning();
+
+            if (targetTab === 'gateway') {
+                // Force a simple passcode verification checkpoint
+                const enteredPin = prompt("Enter 4-Digit Administrator Security PIN:");
+                if (enteredPin !== ADMIN_PIN) {
+                    alert("ACCESS DENIED: Invalid Security Credentials.");
+                    return;
+                }
+                
+                // Show Gateway View, Hide Asset View
+                document.getElementById('view-gateway').classList.add('active');
+                document.getElementById('view-asset').classList.remove('active');
+                document.getElementById('tab-gateway').classList.add('active');
+                document.getElementById('tab-asset').classList.remove('active');
+            } else {
+                // Show Asset View, Hide Gateway View
+                document.getElementById('view-asset').classList.add('active');
+                document.getElementById('view-gateway').classList.remove('active');
+                document.getElementById('tab-asset').classList.add('active');
+                document.getElementById('tab-gateway').classList.remove('active');
+            }
+        }
+
+        function startScanning(target) {
+            currentScanTarget = target;
+            const displayBoxId = target === 'gateway' ? 'gateway-display-box' : 'asset-display-box';
+            const displayBox = document.getElementById(displayBoxId);
             const scannerContainer = document.getElementById('scanner-container');
             
             scannerContainer.style.display = 'block';
-            displayBox.innerText = "[ ACQUIRING CAMERA... ]";
+            displayBox.innerText = "[ ACQUIRING HARDWARE CAMERA... ]";
 
             if (html5QrcodeScanner) {
                 try { html5QrcodeScanner.clear(); } catch(e){}
@@ -337,16 +439,14 @@
                     { facingMode: "environment" }, 
                     cameraConfig,
                     (decodedText) => {
+                        // Capture scanned ID into correct display input container
                         displayBox.innerText = `[ SCANNED ID = ${decodedText} ]`;
                         displayBox.classList.add('scanned');
                         stopScanning();
                     },
-                    (errorMessage) => {
-                        // Frame skip handler
-                    }
+                    (errorMessage) => {}
                 ).catch(err => {
-                    console.warn("Strict config failed, attempting fallback...", err);
-                    
+                    console.warn("Retrying with fallback parameters...", err);
                     html5QrcodeScanner.start(
                         { facingMode: "environment" },
                         { fps: 10, qrbox: 250 },
@@ -356,9 +456,8 @@
                             stopScanning();
                         }
                     ).catch(fallbackErr => {
-                        displayBox.innerText = "[ ERROR: CAMERA INITIALIZATION FAILED ]";
+                        displayBox.innerText = "[ ERROR: INITIALIZATION FAILED ]";
                         scannerContainer.style.display = 'none';
-                        console.error(fallbackErr);
                     });
                 });
             }, 300);
@@ -369,12 +468,25 @@
                 html5QrcodeScanner.stop().then(() => {
                     document.getElementById('scanner-container').style.display = 'none';
                 }).catch(err => {
-                    console.error(err);
                     document.getElementById('scanner-container').style.display = 'none';
                 });
             }
         }
-        
+
+        function saveGatewayConfig() {
+            const marinaName = document.getElementById('input-marina-name').value;
+            const berthCount = document.getElementById('input-berth-count').value;
+            
+            if(!marinaName || !berthCount) {
+                alert("ERROR: Missing site infrastructure parameters.");
+                return;
+            }
+            alert(`SUCCESS:\nInitializing ${marinaName} with ${berthCount} asset slots.`);
+        }
+
+        function saveAssetProvision() {
+            alert("SUCCESS: Generic device profile provisioned cleanly.");
+        }
     </script>
 </body>
 </html>
