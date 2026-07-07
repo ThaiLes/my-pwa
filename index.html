@@ -642,13 +642,14 @@ function saveGatewayConfig() {
     };
 
     // Send HTTP POST to Supabase site_registry endpoint
+    // Send HTTP POST to Supabase site_registry endpoint
     fetch(`${SUPABASE_BASE_URL}/site_registry`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Prefer": "resolution=merge-duplicates" // Updates if gateway already exists
+            "Accept-Profile": "api" // <-- FORCES IT TO LOOK IN YOUR EXPOSED CUSTOM SCHEMA
         },
         body: JSON.stringify(supabasePayload)
     })
@@ -806,15 +807,29 @@ function saveAssetProvision() {
     };
 
     // Execute sequential writes to asset_ledger and lifecycle_events tables
+    // Execute sequential writes to asset_ledger and lifecycle_events tables
     fetch(`${SUPABASE_BASE_URL}/asset_ledger`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            //"Prefer": "resolution=merge-duplicates"
+            "Accept-Profile": "api" // <-- TELLS THE GATEWAY WHICH FOLDER TO OPEN
         },
         body: JSON.stringify(assetPayload)
+    })
+    .then(res => {
+        if(!res.ok) throw new Error("Asset ledger sync rejected.");
+        return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_KEY,
+                "Authorization": `Bearer ${SUPABASE_KEY}`,
+                "Accept-Profile": "api" // <-- MATCHES FOR THE TRACKING LOG TOO
+            },
+            body: JSON.stringify(eventPayload)
+        });
     })
     .then(res => {
         if(!res.ok) throw new Error("Asset ledger sync rejected.");
