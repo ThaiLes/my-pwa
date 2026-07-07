@@ -662,7 +662,8 @@ function saveGatewayConfig() {
     })
     .catch(error => {
         console.error("Supabase Site sync failed: ", error);
-        alert("LEDGER SYNC FAILURE: Could not write site to Supabase cloud database.");
+        //alert("LEDGER SYNC FAILURE: Could not write site to Supabase cloud database.");
+        alert(`LEDGER SYNC FAILURE:\n${error.message}`);
     });
 }
 
@@ -811,7 +812,7 @@ function saveAssetProvision() {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Prefer": "resolution=merge-duplicates"
+            //"Prefer": "resolution=merge-duplicates"
         },
         body: JSON.stringify(assetPayload)
     })
