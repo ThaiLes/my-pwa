@@ -618,23 +618,23 @@ function stopScanning() { //[cite: 1]
 
 // ACTION 1: INITIALIZE SITE GATEWAY DIRECT TO SUPABASE
 function saveGatewayConfig() {
-    const gatewayId = document.getElementById('gateway-display-box').innerText; //[cite: 1]
-    const marinaName = document.getElementById('input-marina-name').value; //[cite: 1]
-    const berthCount = document.getElementById('input-berth-count').value; //[cite: 1]
+    const gatewayId = document.getElementById('gateway-display-box').innerText; 
+    const marinaName = document.getElementById('input-marina-name').value; 
+    const berthCount = document.getElementById('input-berth-count').value; 
     
-    if(!marinaName || !berthCount || gatewayId.includes("TAP TO SCAN")) { //[cite: 1]
-        alert("ERROR: Missing infrastructure parameters or un-scanned Gateway ID."); //[cite: 1]
-        return; //[cite: 1]
+    if(!marinaName || !berthCount || gatewayId.includes("TAP TO SCAN")) { 
+        alert("ERROR: Missing infrastructure parameters or un-scanned Gateway ID."); 
+        return; 
     }
     
     const configObject = {
-        gatewayId: gatewayId, //[cite: 1]
-        marinaName: marinaName, //[cite: 1]
-        berthCount: parseInt(berthCount), //[cite: 1]
-        timestamp: new Date().toLocaleString() //[cite: 1]
+        gatewayId: gatewayId, 
+        marinaName: marinaName, 
+        berthCount: parseInt(berthCount), 
+        timestamp: new Date().toLocaleString() 
     };
 
-    // Prepare payload matching your Supabase site_registry table schema
+    // Prepare payload matching your Supabase site_registry table schema exactly
     const supabasePayload = {
         gateway_id: gatewayId,
         marina_name: marinaName,
@@ -642,31 +642,30 @@ function saveGatewayConfig() {
     };
 
     // Send HTTP POST to Supabase site_registry endpoint
-    // Send HTTP POST to Supabase site_registry endpoint
     fetch(`${SUPABASE_BASE_URL}/site_registry`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Accept-Profile": "api" // <-- FORCES IT TO LOOK IN YOUR EXPOSED CUSTOM SCHEMA
+            "Accept-Profile": "api" // Forces authorization through your exposed 'api' schema
         },
         body: JSON.stringify(supabasePayload)
     })
     .then(response => {
-        if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
-        localStorage.setItem("activeGateway", JSON.stringify(configObject)); //[cite: 1]
-        renderLogs(); //[cite: 1]
-        updateBerthDropdown(); //[cite: 1]
-        alert(`SUCCESS:\n${marinaName} registered natively into Supabase Ledger with ${berthCount} slots.`); //[cite: 1]
+        localStorage.setItem("activeGateway", JSON.stringify(configObject)); 
+        renderLogs(); 
+        updateBerthDropdown(); 
+        alert(`SUCCESS:\n${marinaName} registered natively into Supabase Ledger with ${berthCount} slots.`); 
     })
     .catch(error => {
         console.error("Supabase Site sync failed: ", error);
-        //alert("LEDGER SYNC FAILURE: Could not write site to Supabase cloud database.");
         alert(`LEDGER SYNC FAILURE:\n${error.message}`);
     });
 }
+
 
 function updateBerthDropdown() { //[cite: 1]
     const selectDropdown = document.getElementById('select-berth-id'); //[cite: 1]
@@ -780,16 +779,16 @@ function saveAssetProvision() {
     }
     
     // UI Button Loading State
-    const actionBtn = document.getElementById('btn-activate-asset'); //[cite: 1]
-    const originalBtnText = actionBtn.innerHTML; //[cite: 1]
+    const actionBtn = document.getElementById('btn-activate-asset');
+    const originalBtnText = actionBtn.innerHTML;
     actionBtn.innerText = "[ TRANSMITTING TO LEDGER... ]";
-    actionBtn.disabled = true; //[cite: 1]
+    actionBtn.disabled = true;
 
     // Prepare payload matching your Supabase asset_ledger table schema
     const assetPayload = {
-        berth_id: parseInt(berthId, 10),
-        gateway_id: activeGateway.gatewayId,
-        puck_id: puckId,
+        berth_id: parseInt(berthld, 10),
+        gateway_id: activeGateway.gatewayId || activeGateway.gatewayld,
+        puck_id: puckld,
         utility_type: utilityType
     };
 
@@ -797,16 +796,15 @@ function saveAssetProvision() {
     const eventPayload = {
         event_date: new Date().toISOString().split('T')[0],
         event_time: new Date().toTimeString().split(' ')[0],
-        gateway_id: activeGateway.gatewayId,
+        gateway_id: activeGateway.gatewayId || activeGateway.gatewayld,
         marina_name: activeGateway.marinaName,
         activity_type: currentOperationMode,
-        location_id: `Berth-${berthId}`,
-        puck_id: puckId,
+        location_id: `Berth-${berthld}`,
+        puck_id: puckld,
         utility_type: utilityType,
         operational_status: "ACTIVE"
     };
 
-    // Execute sequential writes to asset_ledger and lifecycle_events tables
     // Execute sequential writes to asset_ledger and lifecycle_events tables
     fetch(`${SUPABASE_BASE_URL}/asset_ledger`, {
         method: "POST",
@@ -814,52 +812,41 @@ function saveAssetProvision() {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Accept-Profile": "api" // <-- TELLS THE GATEWAY WHICH FOLDER TO OPEN
+            "Accept-Profile": "api"
         },
         body: JSON.stringify(assetPayload)
     })
     .then(res => {
-        if(!res.ok) throw new Error("Asset ledger sync rejected.");
+        if(!res.ok) throw new Error(`Asset Ledger Error (Status ${res.status})`);
         return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${SUPABASE_KEY}`,
-                "Accept-Profile": "api" // <-- MATCHES FOR THE TRACKING LOG TOO
+                "Accept-Profile": "api"
             },
             body: JSON.stringify(eventPayload)
         });
     })
     .then(res => {
-        if(!res.ok) throw new Error("Asset ledger sync rejected.");
-        return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "apikey": SUPABASE_KEY,
-                "Authorization": `Bearer ${SUPABASE_KEY}`
-            },
-            body: JSON.stringify(eventPayload)
-        });
-    })
-    .then(res => {
-        if(!res.ok) throw new Error("Lifecycle logger event rejected.");
+        if(!res.ok) throw new Error(`Lifecycle Events Log Error (Status ${res.status})`);
         
-        localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger)); //[cite: 1]
-        renderAssetLedger(); //[cite: 1]
-        resetAssetForm(); //[cite: 1]
+        localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger));
+        renderAssetLedger();
+        resetAssetForm();
         alert(`SUCCESS: Once-off Lifecycle Message Logged to Supabase Ledger cleanly!`);
     })
     .catch(error => {
-        console.error("Network upload link failed: ", error); //[cite: 1]
-        alert("NET ERROR: Record cached locally, but failed to hit Supabase ledger server.");
+        console.error("Network upload link failed: ", error);
+        alert(`NET ERROR:\n${error.message}`);
     })
     .finally(() => {
-        actionBtn.innerHTML = originalBtnText; //[cite: 1]
-        actionBtn.disabled = false; //[cite: 1]
+        actionBtn.innerHTML = originalBtnText;
+        actionBtn.disabled = false;
     });
 }
+
 
 function renderAssetLedger() { //[cite: 1]
     const container = document.getElementById('asset-ledger-list'); //[cite: 1]
