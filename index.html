@@ -479,6 +479,8 @@ let currentOperationMode = null;
 // NEW SUPABASE CONNECTION CONFIGURATION
 // Verified Live Production Database Configuration
 const SUPABASE_BASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
+
+// The authentic public eyJ token we discovered
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
 
 const ADMIN_PIN = "1234"; //
@@ -644,16 +646,17 @@ function saveGatewayConfig() {
 
     // Send HTTP POST to Supabase site_registry endpoint
     // Send HTTP POST to Supabase site_registry endpoint
+    // Send HTTP POST to Supabase site_registry endpoint
     fetch(`${SUPABASE_BASE_URL}/site_registry`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Accept-Profile": "public",
-            "Content-Profile": "public"
+            "Accept-Profile": "api",      // Directs mobile traffic to the correct schema
+            "Content-Profile": "api"     // Confirms payload alignment
         },
-        body: JSON.stringify(supabasePayload)
+        body: JSON.stringify(supabasePayload) // Use whatever payload variable your app defines
     })
     .then(response => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -809,17 +812,17 @@ function saveAssetProvision() {
     };
 
     // Execute sequential writes to asset_ledger and lifecycle_events tables
-    // Execute sequential writes to asset_ledger and lifecycle_events tables
+    // Send HTTP POST to Supabase asset_ledger endpoint
     fetch(`${SUPABASE_BASE_URL}/asset_ledger`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Accept-Profile": "public",
-            "Content-Profile": "public"
+            "Accept-Profile": "api",      // Directs mobile traffic to the correct schema
+            "Content-Profile": "api"     // Confirms payload alignment
         },
-        body: JSON.stringify(assetPayload)
+        body: JSON.stringify(assetPayload) // Use your app's asset payload variable
     })
     .then(res => {
         if(!res.ok) throw new Error(`Asset Ledger Error (Status ${res.status})`);
