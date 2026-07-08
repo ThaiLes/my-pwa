@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Ledger Test Bench</title>
+    <style>
+        body { font-family: monospace; background: #1a1c20; color: #e2e4e9; padding: 20px; text-align: center; }
+        button { display: block; width: 100%; max-width: 300px; margin: 20px auto; padding: 15px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        #log { background: #000; color: #0f0; padding: 15px; text-align: left; max-width: 500px; margin: 20px auto; white-space: pre-wrap; font-size: 12px; min-height: 100px; }
+    </style>
+</head>
+<body>
+
+    <h2>Supabase HIL Test Bench</h2>
+    <p>Testing direct browser-to-cloud ledger writes</p>
+
+    <button onclick="sendTestGateway()" style="background: #2ea043; color: white;">1. SEND TEST GATEWAY</button>
+    <button onclick="sendTestAsset()" style="background: #0076d6; color: white;">2. SEND TEST ASSET</button>
+
+    <h3>Console Output Log:</h3>
+    <div id="log">Awaiting action...</div>
+
+    <script>
+        // Use the exact parameters that successfully cleared the Node-RED gateway
+        const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
+        const SUPABASE_KEY = "sb_publishable_m9k0mXkBaEgj4taltY4OIw_WMiN5QXS";
+
+        function logMessage(msg) {
+            document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        }
+
+        // BUTTON 1: SIMULATE MASTER SITE REGISTRY INSERTION
+        function sendTestGateway() {
+            logMessage("Transmitting Gateway info...");
+            
+            const payload = {
+                gateway_id: "GW-PUCK-TEST-99",
+                marina_name: "Test Bench Marina",
+                max_berth_slots: 24
+            };
+
+            fetch(`${SUPABASE_URL}/site_registry`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`,
+                    "Accept-Profile": "public" 
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP Error Status ${res.status}`);
+                logMessage("SUCCESS: Gateway registered cleanly in Supabase site_registry!");
+            })
+            .catch(err => {
+                logMessage(`FAILED: ${err.message}`);
+            });
+        }
+
+        // BUTTON 2: SIMULATE DEPENDENT ASSET ENTRY
+        function sendTestAsset() {
+            logMessage("Transmitting Asset mapping...");
+
+            const payload = {
+                berth_id: 5,
+                gateway_id: "GW-PUCK-TEST-99", // Targets the master key above
+                puck_id: "PUCK-9999",
+                utility_type: "Electricity Meter"
+            };
+
+            fetch(`${SUPABASE_URL}/asset_ledger`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`,
+                    "Accept-Profile": "public"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP Error Status ${res.status}`);
+                logMessage("SUCCESS: Asset provisioned cleanly in Supabase asset_ledger!");
+            })
+            .catch(err => {
+                logMessage(`FAILED: ${err.message}`);
+            });
+        }
+    </script>
+</body>
+</html>
