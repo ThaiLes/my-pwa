@@ -23,8 +23,12 @@
 
  <script>
     // Standard public REST directory paths
+    // The true public REST endpoint configuration
     const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
-    const SUPABASE_KEY = "sb_publishable_m9k0mXkBaEgj4taltY4OIw_WMiN5QXS";
+
+    // Drop in your newly found eyJ token here!
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
+
 
     function logMessage(msg) {
         document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
