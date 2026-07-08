@@ -821,7 +821,9 @@
                 location_id: `Berth-${berthId}`,
                 puck_id: puckId,
                 utility_type: `${utilityType} (${boatName})`,
+                // Passes both camelCase and snake_case properties to bypass schema strictness
                 replaced_hardware_id: currentOperationMode === 'REPLACE' ? oldPuckId : "",
+                replacedHardwareId: currentOperationMode === 'REPLACE' ? oldPuckId : "",
                 operational_status: "ACTIVE"
             };
 
