@@ -34,7 +34,7 @@
         logMessage("Transmitting Gateway to public.site_registry...");
         
         const payload = {
-            gateway_id: "GW-CLEAN-SLATE-99",
+            gateway_id: "GW-CLEAN-SLATE-100", // Changed from 99 to 100
             marina_name: "Fresh Start Marina",
             max_berth_slots: 12
         };
@@ -64,9 +64,9 @@
         logMessage("Transmitting Asset to public.asset_ledger...");
 
         const payload = {
-            berth_id: 1,
-            gateway_id: "GW-CLEAN-SLATE-99",
-            puck_id: "PUCK-FRESH-1",
+            berth_id: 2,                     // Changed from 1 to 2
+            gateway_id: "GW-CLEAN-SLATE-100", // Match the parent ID above
+            puck_id: "PUCK-FRESH-2",         // Changed from 1 to 2
             utility_type: "Water Meter"
         };
 
