@@ -888,6 +888,65 @@ function renderAssetLedger() { //[cite: 1]
     });
 }
 
+function renderLifecycleHistory() {
+    const tableBody = document.getElementById('history-log-rows');
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:16px; color:#4e535e;">Fetching audit trail from Supabase...</td></tr>`;
+
+    fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
+        method: "GET",
+        headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": `Bearer ${SUPABASE_KEY}`,
+            "Accept-Profile": "api"
+        }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+        return res.json();
+    })
+    .then(data => {
+        if (!data || data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:16px; color:#4e535e;">No historical actions logged.</td></tr>`;
+            return;
+        }
+
+        // Sort data descending (Most recent events at the very top)
+        data.sort((a, b) => {
+            const dateTimeA = new Date(`${a.event_date} ${a.event_time}`);
+            const dateTimeB = new Date(`${b.event_date} ${b.event_time}`);
+            return dateTimeB - dateTimeA;
+        });
+
+        tableBody.innerHTML = ""; // Clear loader
+
+        data.forEach(event => {
+            const row = document.createElement('tr');
+            row.style.borderBottom = "1px solid #2e3440";
+            
+            // Highlight action type color code
+            const actionColor = event.activity_type === 'INSTALL' ? '#4caf50' : '#ff9e22';
+            
+            // Fallback display formatting for empty replacement data fields
+            const replacedIdDisplay = event.replaced_hardware_id || event.replacedHardwareId || `<span style="color:#4e535e;">—</span>`;
+
+            row.innerHTML = `
+                <td style="padding: 8px; font-weight: bold; color: #a0a6b5;">${event.event_date}</td>
+                <td style="padding: 8px; color: #888e9b;">${event.event_time}</td>
+                <td style="padding: 8px; font-weight: bold; color: ${actionColor};">${event.activity_type}</td>
+                <td style="padding: 8px;">${event.location_id || 'N/A'}</td>
+                <td style="padding: 8px;"><span class="badge">${event.utility_type}</span></td>
+                <td style="padding: 8px; font-family: monospace; color: #e5c07b;">${event.puck_id}</td>
+                <td style="padding: 8px; font-family: monospace; color: #e06c75;">${replacedIdDisplay}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    })
+    .catch(err => {
+        console.error("Failed to compile history dashboard: ", err);
+        tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:16px; color:#e06c75;">Error connecting to live ledger: ${err.message}</td></tr>`;
+    });
+}
+
 function deleteAssetRecord(berthId) { //[cite: 1]
     if (!confirm(`CAUTION: De-provision Berth ${berthId}? This clears its record from the local ledger mapping grid.`)) return; //[cite: 1]
     let currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || []; //[cite: 1]
