@@ -23,7 +23,8 @@
 
     <script>
         // Use the exact parameters that successfully cleared the Node-RED gateway
-        const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
+        // Switch the base string to match the exposed infrastructure route
+        const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest-admin/v1";
         const SUPABASE_KEY = "sb_publishable_m9k0mXkBaEgj4taltY4OIw_WMiN5QXS";
 
         function logMessage(msg) {
