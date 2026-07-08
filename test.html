@@ -6,14 +6,14 @@
     <title>Supabase Ledger Test Bench</title>
     <style>
         body { font-family: monospace; background: #1a1c20; color: #e2e4e9; padding: 20px; text-align: center; }
-        button { display: block; width: 100%; max-width: 300px; margin: 20px auto; padding: 15px; font-weight: bold; font-size: 16px; cursor: pointer; }
-        #log { background: #000; color: #0f0; padding: 15px; text-align: left; max-width: 500px; margin: 20px auto; white-space: pre-wrap; font-size: 12px; min-height: 100px; }
+        button { display: block; width: 100%; max-width: 300px; margin: 20px auto; padding: 15px; font-weight: bold; font-size: 16px; cursor: pointer; border: none; border-radius: 4px; }
+        #log { background: #000; color: #0f0; padding: 15px; text-align: left; max-width: 500px; margin: 20px auto; white-space: pre-wrap; font-size: 12px; min-height: 100px; border-radius: 4px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <h2>Supabase HIL Test Bench</h2>
-    <p>Testing direct browser-to-cloud ledger writes</p>
+    <h2>Supabase HIL Test Bench (Clean Slate)</h2>
+    <p>Targeting default public schema ledger lines</p>
 
     <button onclick="sendTestGateway()" style="background: #2ea043; color: white;">1. SEND TEST GATEWAY</button>
     <button onclick="sendTestAsset()" style="background: #0076d6; color: white;">2. SEND TEST ASSET</button>
@@ -21,39 +21,71 @@
     <h3>Console Output Log:</h3>
     <div id="log">Awaiting action...</div>
 
-<script>
-    // Target the root REST configuration directory map
-    const DIAGNOSTIC_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1/";
-    const TEST_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
+    <script>
+        // Clean public REST endpoints
+        const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
+        const PUBLIC_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
 
-    function logMessage(msg) {
-        document.getElementById('log').innerText = msg;
-    }
+        function logMessage(msg) {
+            document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        }
 
-    // Automatically probe the endpoint structure when the page loads
-    window.onload = function() {
-        logMessage("Probing API directory map...");
+        // BUTTON 1: MASTER GATEWAY LOG
+        function sendTestGateway() {
+            logMessage("Transmitting Gateway to public.site_registry...");
+            
+            const payload = {
+                gateway_id: "GW-CLEAN-SLATE-99",
+                marina_name: "Fresh Start Marina",
+                max_berth_slots: 12
+            };
 
-        fetch(DIAGNOSTIC_URL, {
-            method: "GET",
-            headers: {
-                "apikey": TEST_KEY,
-                "Authorization": `Bearer ${TEST_KEY}`
-            }
-        })
-        .then(res => {
-            if (!res.ok) throw new Error(`Server Map Error: Status ${res.status}`);
-            return res.json();
-        })
-        .then(data => {
-            // Grab all available table paths exposed to this key
-            const paths = data.paths ? Object.keys(data.paths) : [];
-            logMessage(`CONNECTED!\nExposed Endpoint Paths:\n\n${paths.join('\n')}`);
-        })
-        .catch(err => {
-            logMessage(`PROBE FAILED: ${err.message}`);
-        });
-    }
-</script>
+            fetch(`${SUPABASE_URL}/site_registry`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": PUBLIC_TOKEN,
+                    "Authorization": `Bearer ${PUBLIC_TOKEN}`
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+                logMessage("SUCCESS: Gateway saved into public table registry!");
+            })
+            .catch(err => {
+                logMessage(`FAILED: ${err.message}`);
+            });
+        }
+
+        // BUTTON 2: DEPENDENT ASSET LOG
+        function sendTestAsset() {
+            logMessage("Transmitting Asset to public.asset_ledger...");
+
+            const payload = {
+                berth_id: 1,
+                gateway_id: "GW-CLEAN-SLATE-99", // References master key above
+                puck_id: "PUCK-FRESH-1",
+                utility_type: "Water Meter"
+            };
+
+            fetch(`${SUPABASE_URL}/asset_ledger`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": PUBLIC_TOKEN,
+                    "Authorization": `Bearer ${PUBLIC_TOKEN}`
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+                logMessage("SUCCESS: Asset mapped onto public asset ledger!");
+            })
+            .catch(err => {
+                logMessage(`FAILED: ${err.message}`);
+            });
+        }
+    </script>
 </body>
 </html>
