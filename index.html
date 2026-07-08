@@ -908,7 +908,9 @@
 
         function updateBerthDropdown() {
             const selectDropdown = document.getElementById('select-berth-id');
+            const boatInput = document.getElementById('input-boat-name');
             const savedData = localStorage.getItem("activeGateway");
+            
             selectDropdown.innerHTML = '<option value="" disabled selected>[ Select Berth ]</option>';
             
             let count = 10;
@@ -922,15 +924,19 @@
                 option.innerText = `Berth ${i}`;
                 selectDropdown.appendChild(option);
             }
-        }
 
-        function renderLogs() {
-            const savedData = localStorage.getItem("activeGateway");
-            const logBox = document.getElementById('gateway-log');
-            if (savedData) {
-                const parsed = JSON.parse(savedData);
-                logBox.innerText = `[ACTIVE SITE REGISTRY ]\nYard Name: ${parsed.marinaName}\nGateway: ${parsed.gatewayId}\nMax Slots: ${parsed.berthCount}\nInitialized: ${parsed.timestamp}`;
-            }
+            // NEW: Listen for berth changes to pull up existing boat names automatically
+            selectDropdown.onchange = function() {
+                const selectedBerth = selectDropdown.value;
+                const currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+                const existingAsset = currentLedger.find(item => item.berthId === selectedBerth);
+                
+                if (existingAsset && existingAsset.boatName && existingAsset.boatName !== "Unallocated Berth") {
+                    boatInput.value = existingAsset.boatName; // Found an existing name!
+                } else {
+                    boatInput.value = ""; // Clear it for a fresh input if the berth is empty
+                }
+            };
         }
 
         function renderAssetLedger() {
