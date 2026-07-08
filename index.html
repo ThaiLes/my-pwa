@@ -477,8 +477,9 @@ let scannableActive = false;
 let currentOperationMode = null;
 
 // NEW SUPABASE CONNECTION CONFIGURATION
+// Verified Live Production Database Configuration
 const SUPABASE_BASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
-const SUPABASE_KEY = "sb_publishable_m9k0mXkBaEgj4taltY4OIw_WMiN5QXS";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
 
 const ADMIN_PIN = "1234"; //
 
@@ -642,13 +643,15 @@ function saveGatewayConfig() {
     };
 
     // Send HTTP POST to Supabase site_registry endpoint
+    // Send HTTP POST to Supabase site_registry endpoint
     fetch(`${SUPABASE_BASE_URL}/site_registry`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Accept-Profile": "public"
+            "Accept-Profile": "public",
+            "Content-Profile": "public"
         },
         body: JSON.stringify(supabasePayload)
     })
@@ -806,13 +809,15 @@ function saveAssetProvision() {
     };
 
     // Execute sequential writes to asset_ledger and lifecycle_events tables
+    // Execute sequential writes to asset_ledger and lifecycle_events tables
     fetch(`${SUPABASE_BASE_URL}/asset_ledger`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
-            "Accept-Profile": "api"
+            "Accept-Profile": "public",
+            "Content-Profile": "public"
         },
         body: JSON.stringify(assetPayload)
     })
@@ -824,7 +829,8 @@ function saveAssetProvision() {
                 "Content-Type": "application/json",
                 "apikey": SUPABASE_KEY,
                 "Authorization": `Bearer ${SUPABASE_KEY}`,
-                "Accept-Profile": "api"
+                "Accept-Profile": "public",
+                "Content-Profile": "public"
             },
             body: JSON.stringify(eventPayload)
         });
