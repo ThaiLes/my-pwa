@@ -46,7 +46,7 @@
                     "Content-Type": "application/json",
                     "apikey": SUPABASE_KEY,
                     "Authorization": `Bearer ${SUPABASE_KEY}`,
-                    "Accept-Profile": "public" 
+                    "Accept-Profile": "api" // <-- CHANGE THIS FROM "public" TO "api"
                 },
                 body: JSON.stringify(payload)
             })
@@ -76,7 +76,7 @@
                     "Content-Type": "application/json",
                     "apikey": SUPABASE_KEY,
                     "Authorization": `Bearer ${SUPABASE_KEY}`,
-                    "Accept-Profile": "public"
+                    "Accept-Profile": "api" // <-- CHANGE THIS FROM "public" TO "api"
                 },
                 body: JSON.stringify(payload)
             })
