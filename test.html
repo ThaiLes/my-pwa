@@ -21,76 +21,39 @@
     <h3>Console Output Log:</h3>
     <div id="log">Awaiting action...</div>
 
- <script>
-    // Standard public REST directory paths
-    // The true public REST endpoint configuration
-    const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
-
-    // Drop in your newly found eyJ token here!
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
-
+<script>
+    // Target the root REST configuration directory map
+    const DIAGNOSTIC_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1/";
+    const TEST_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
 
     function logMessage(msg) {
-        document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        document.getElementById('log').innerText = msg;
     }
 
-    // BUTTON 1: DIRECT WRITE TO PUBLIC SITE_REGISTRY
-    function sendTestGateway() {
-        logMessage("Transmitting Gateway info to public schema...");
-        
-        const payload = {
-            gateway_id: "GW-PUCK-TEST-99",
-            marina_name: "Test Bench Marina",
-            max_berth_slots: 24
-        };
+    // Automatically probe the endpoint structure when the page loads
+    window.onload = function() {
+        logMessage("Probing API directory map...");
 
-        fetch(`${SUPABASE_URL}/site_registry`, {
-            method: "POST",
+        fetch(DIAGNOSTIC_URL, {
+            method: "GET",
             headers: {
-                "Content-Type": "application/json",
-                "apikey": SUPABASE_KEY,
-                "Authorization": `Bearer ${SUPABASE_KEY}`
-                // No Accept-Profile header needed because it defaults to 'public'!
-            },
-            body: JSON.stringify(payload)
+                "apikey": TEST_KEY,
+                "Authorization": `Bearer ${TEST_KEY}`
+            }
         })
         .then(res => {
-            if (!res.ok) throw new Error(`HTTP Error Status ${res.status}`);
-            logMessage("SUCCESS: Gateway registered cleanly in public.site_registry!");
+            if (!res.ok) throw new Error(`Server Map Error: Status ${res.status}`);
+            return res.json();
+        })
+        .then(data => {
+            // Grab all available table paths exposed to this key
+            const paths = data.paths ? Object.keys(data.paths) : [];
+            logMessage(`CONNECTED!\nExposed Endpoint Paths:\n\n${paths.join('\n')}`);
         })
         .catch(err => {
-            logMessage(`FAILED: ${err.message}`);
+            logMessage(`PROBE FAILED: ${err.message}`);
         });
     }
-
-    // BUTTON 2: DIRECT WRITE TO PUBLIC ASSET_LEDGER
-    function sendTestAsset() {
-        logMessage("Transmitting Asset info to public schema...");
-
-        const payload = {
-            berth_id: 5,
-            gateway_id: "GW-PUCK-TEST-99",
-            puck_id: "PUCK-9999",
-            utility_type: "Electricity Meter"
-        };
-
-        fetch(`${SUPABASE_URL}/asset_ledger`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "apikey": SUPABASE_KEY,
-                "Authorization": `Bearer ${SUPABASE_KEY}`
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP Error Status ${res.status}`);
-            logMessage("SUCCESS: Asset provisioned cleanly in public.asset_ledger!");
-        })
-        .catch(err => {
-            logMessage(`FAILED: ${err.message}`);
-        });
-    }
-</script>   
+</script>
 </body>
 </html>
