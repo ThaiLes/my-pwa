@@ -61,34 +61,35 @@
 
     // BUTTON 2: TARGET PUBLIC SCHEMA EXPLICITLY
     function sendTestAsset() {
-        logMessage("Transmitting Asset to public.asset_ledger...");
+    logMessage("Transmitting Asset to api.asset_ledger...");
 
-        const payload = {
-            berth_id: 2,                     // Changed from 1 to 2
-            gateway_id: "GW-CLEAN-SLATE-100", // Match the parent ID above
-            puck_id: "PUCK-FRESH-2",         // Changed from 1 to 2
-            utility_type: "Water Meter"
-        };
+    // Double-check that these exact key names match your database columns perfectly!
+    const payload = {
+        berth_id: 2,
+        gateway_id: "GW-CLEAN-SLATE-100",
+        puck_id: "PUCK-FRESH-2",
+        utility_type: "Water Meter"
+    };
 
-        fetch(`${SUPABASE_URL}/asset_ledger`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "apikey": PUBLIC_TOKEN,
-                "Authorization": `Bearer ${PUBLIC_TOKEN}`,
-                "Accept-Profile": "api",    // <-- Sync to your live api schema
-                "Content-Profile": "api"   // <-- Sync to your live api schema
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-            logMessage("SUCCESS: Asset mapped onto public asset ledger!");
-        })
-        .catch(err => {
-            logMessage(`FAILED: ${err.message}`);
-        });
-    }
+    fetch(`${SUPABASE_URL}/asset_ledger`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "apikey": PUBLIC_TOKEN,
+            "Authorization": `Bearer ${PUBLIC_TOKEN}`,
+            "Accept-Profile": "api",
+            "Content-Profile": "api"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => {
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+        logMessage("SUCCESS: Asset mapped onto asset ledger!");
+    })
+    .catch(err => {
+        logMessage(`FAILED: ${err.message}`);
+    });
+}
 </script>   
 </body>
 </html>
