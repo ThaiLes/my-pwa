@@ -45,8 +45,8 @@
                 "Content-Type": "application/json",
                 "apikey": PUBLIC_TOKEN,
                 "Authorization": `Bearer ${PUBLIC_TOKEN}`,
-                "Accept-Profile": "public",  // <-- Forces the router into your public schema
-                "Content-Profile": "public" // <-- Confirms the destination mapping schema
+                "Accept-Profile": "api",    // <-- Sync to your live api schema
+                "Content-Profile": "api"   // <-- Sync to your live api schema
             },
             body: JSON.stringify(payload)
         })
@@ -76,8 +76,8 @@
                 "Content-Type": "application/json",
                 "apikey": PUBLIC_TOKEN,
                 "Authorization": `Bearer ${PUBLIC_TOKEN}`,
-                "Accept-Profile": "public",  // <-- Forces the router into your public schema
-                "Content-Profile": "public" // <-- Confirms the destination mapping schema
+                "Accept-Profile": "api",    // <-- Sync to your live api schema
+                "Content-Profile": "api"   // <-- Sync to your live api schema
             },
             body: JSON.stringify(payload)
         })
