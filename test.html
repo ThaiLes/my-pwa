@@ -21,71 +21,74 @@
     <h3>Console Output Log:</h3>
     <div id="log">Awaiting action...</div>
 
-    <script>
-        // Clean public REST endpoints
-        const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
-        const PUBLIC_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
+ <script>
+    const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
+    const PUBLIC_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
 
-        function logMessage(msg) {
-            document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-        }
+    function logMessage(msg) {
+        document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    }
 
-        // BUTTON 1: MASTER GATEWAY LOG
-        function sendTestGateway() {
-            logMessage("Transmitting Gateway to public.site_registry...");
-            
-            const payload = {
-                gateway_id: "GW-CLEAN-SLATE-99",
-                marina_name: "Fresh Start Marina",
-                max_berth_slots: 12
-            };
+    // BUTTON 1: TARGET PUBLIC SCHEMA EXPLICITLY
+    function sendTestGateway() {
+        logMessage("Transmitting Gateway to public.site_registry...");
+        
+        const payload = {
+            gateway_id: "GW-CLEAN-SLATE-99",
+            marina_name: "Fresh Start Marina",
+            max_berth_slots: 12
+        };
 
-            fetch(`${SUPABASE_URL}/site_registry`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "apikey": PUBLIC_TOKEN,
-                    "Authorization": `Bearer ${PUBLIC_TOKEN}`
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-                logMessage("SUCCESS: Gateway saved into public table registry!");
-            })
-            .catch(err => {
-                logMessage(`FAILED: ${err.message}`);
-            });
-        }
+        fetch(`${SUPABASE_URL}/site_registry`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": PUBLIC_TOKEN,
+                "Authorization": `Bearer ${PUBLIC_TOKEN}`,
+                "Accept-Profile": "public",  // <-- Forces the router into your public schema
+                "Content-Profile": "public" // <-- Confirms the destination mapping schema
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+            logMessage("SUCCESS: Gateway saved into public table registry!");
+        })
+        .catch(err => {
+            logMessage(`FAILED: ${err.message}`);
+        });
+    }
 
-        // BUTTON 2: DEPENDENT ASSET LOG
-        function sendTestAsset() {
-            logMessage("Transmitting Asset to public.asset_ledger...");
+    // BUTTON 2: TARGET PUBLIC SCHEMA EXPLICITLY
+    function sendTestAsset() {
+        logMessage("Transmitting Asset to public.asset_ledger...");
 
-            const payload = {
-                berth_id: 1,
-                gateway_id: "GW-CLEAN-SLATE-99", // References master key above
-                puck_id: "PUCK-FRESH-1",
-                utility_type: "Water Meter"
-            };
+        const payload = {
+            berth_id: 1,
+            gateway_id: "GW-CLEAN-SLATE-99",
+            puck_id: "PUCK-FRESH-1",
+            utility_type: "Water Meter"
+        };
 
-            fetch(`${SUPABASE_URL}/asset_ledger`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "apikey": PUBLIC_TOKEN,
-                    "Authorization": `Bearer ${PUBLIC_TOKEN}`
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(res => {
-                if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-                logMessage("SUCCESS: Asset mapped onto public asset ledger!");
-            })
-            .catch(err => {
-                logMessage(`FAILED: ${err.message}`);
-            });
-        }
-    </script>
+        fetch(`${SUPABASE_URL}/asset_ledger`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": PUBLIC_TOKEN,
+                "Authorization": `Bearer ${PUBLIC_TOKEN}`,
+                "Accept-Profile": "public",  // <-- Forces the router into your public schema
+                "Content-Profile": "public" // <-- Confirms the destination mapping schema
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+            logMessage("SUCCESS: Asset mapped onto public asset ledger!");
+        })
+        .catch(err => {
+            logMessage(`FAILED: ${err.message}`);
+        });
+    }
+</script>   
 </body>
 </html>
