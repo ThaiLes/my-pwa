@@ -700,7 +700,7 @@
             };
             
             // 1. Post to asset_ledger matching on conflict against the berth_id column explicitly
-                fetch(`${SUPABASE_BASE_URL}/asset_ledger?on_conflict=berth_id`, {
+                fetch(`${SUPABASE_BASE_URL}/asset_ledger?on_conflict=puck_id`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
