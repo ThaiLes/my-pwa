@@ -833,8 +833,8 @@
                     "Content-Type": "application/json",
                     "apikey": SUPABASE_KEY,
                     "Authorization": `Bearer ${SUPABASE_KEY}`,
-                    "Accept-Profile": "api",
-                    "Content-Profile": "api"
+                    "Accept-Profile": "public",
+                    "Content-Profile": "public"
                 },
                 body: JSON.stringify(assetPayload)
             })
@@ -846,8 +846,8 @@
                         "Content-Type": "application/json",
                         "apikey": SUPABASE_KEY,
                         "Authorization": `Bearer ${SUPABASE_KEY}`,
-                        "Accept-Profile": "api",
-                        "Content-Profile": "api"
+                        "Accept-Profile": "public",
+                        "Content-Profile": "public"
                     },
                     body: JSON.stringify(eventPayload)
                 });
@@ -885,7 +885,7 @@
                 headers: {
                     "apikey": SUPABASE_KEY,
                     "Authorization": `Bearer ${SUPABASE_KEY}`,
-                    "Accept-Profile": "api"
+                    "Accept-Profile": "public"
                 }
             })
             .then(res => res.json())
