@@ -700,20 +700,19 @@
             };
             
             // 1. Post to asset_ledger matching on conflict against the berth_id column explicitly
-                fetch(`${SUPABASE_BASE_URL}/asset_ledger?on_conflict=puck_id`, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "apikey": SUPABASE_KEY,
-                        "Authorization": `Bearer ${SUPABASE_KEY}`,
-                        "Accept-Profile": "public",
-                        "Content-Profile": "public",
-                        
-                        // This header works hand-in-hand with the on_conflict URL parameter above
-                        "Prefer": "resolution=merge-duplicates" 
-                    },
-                    body: JSON.stringify(assetPayload)
-                })
+                // 1. Post to asset_ledger targeting the clear primary key
+    fetch(`${SUPABASE_BASE_URL}/asset_ledger?on_conflict=berth_id`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": `Bearer ${SUPABASE_KEY}`,
+            "Accept-Profile": "public",
+            "Content-Profile": "public",
+            "Prefer": "resolution=merge-duplicates" // Tells the engine to overwrite the existing berth row
+        },
+        body: JSON.stringify(assetPayload)
+    })
             .then(res => {
                 if (!res.ok) throw new Error(`Registry Error Code: ${res.status}`);
                 return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
