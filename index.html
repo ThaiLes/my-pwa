@@ -782,14 +782,14 @@
                 alert("ERROR: Please select a target location berth.");
                 return;
             }
-            
+
             const boatName = document.getElementById('input-boat-name').value.trim() || "Unallocated Berth";
             const utilityType = document.querySelector('input[name="utility"]:checked').value;
+            
             let currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
             const existingAssetIndex = currentLedger.findIndex(item => item.berthId === berthId);
-            
             const oldPuckId = (existingAssetIndex !== -1) ? currentLedger[existingAssetIndex].puckId : "";
-
+            
             let parcelData = {
                 gatewayId: activeGateway.gatewayId,
                 marinaName: activeGateway.marinaName,
@@ -803,7 +803,7 @@
             };
 
             const actionBtn = document.getElementById('btn-activate-asset');
-            actionBtn.innerText = "[ TRANSMITTING TO LEDGER... ]";
+            actionBtn.innerText = "[TRANSMITTING TO LEDGER... ]";
             actionBtn.disabled = true;
 
             const assetPayload = {
@@ -822,26 +822,28 @@
                 location_id: `Berth-${berthId}`,
                 puck_id: puckId,
                 utility_type: `${utilityType} (${boatName})`,
-                // Passes both camelCase and snake_case properties to bypass schema strictness
                 replaced_hardware_id: currentOperationMode === 'REPLACE' ? oldPuckId : "",
                 replacedHardwareId: currentOperationMode === 'REPLACE' ? oldPuckId : "",
                 operational_status: "ACTIVE"
             };
 
+            // 1. Post to asset_ledger utilizing the public schema and merge resolution
             fetch(`${SUPABASE_BASE_URL}/asset_ledger`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "apikey": SUPABASE_KEY,
                     "Authorization": `Bearer ${SUPABASE_KEY}`,
-                    "Accept-Profile": "public",
-                    "Content-Profile": "public"
-                    "Resolution": "merge-duplicates"
+                    "Accept-Profile": "public",       // Overridden to target public schema
+                    "Content-Profile": "public",      // Overridden to target public schema
+                    "Resolution": "merge-duplicates"  // Solves the 409 Conflict rejection error
                 },
                 body: JSON.stringify(assetPayload)
             })
             .then(res => {
                 if (!res.ok) throw new Error(`Asset Ledger Sync Rejection (Status ${res.status})`);
+                
+                // 2. Chain execution to update the lifecycle events log
                 return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
                     method: "POST",
                     headers: {
@@ -849,7 +851,8 @@
                         "apikey": SUPABASE_KEY,
                         "Authorization": `Bearer ${SUPABASE_KEY}`,
                         "Accept-Profile": "public",
-                        "Content-Profile": "public"
+                        "Content-Profile": "public",
+                        "Resolution": "merge-duplicates"
                     },
                     body: JSON.stringify(eventPayload)
                 });
@@ -857,6 +860,7 @@
             .then(res => {
                 if (!res.ok) throw new Error(`History Trace Rejection (Status ${res.status})`);
                 
+                // 3. Update local states on successful remote transmission
                 if (existingAssetIndex !== -1) {
                     currentLedger[existingAssetIndex] = parcelData;
                 } else {
@@ -867,18 +871,17 @@
                 renderAssetLedger();
                 resetAssetForm();
                 renderLifecycleHistory();
-                alert(`SUCCESS: Assets and dynamic metadata successfully mapped to ledger.`);
+                alert("SUCCESS: Assets and dynamic metadata successfully mapped to ledger.");
             })
             .catch(error => {
                 console.error(error);
-                alert(`NET UPLOAD LINK FAILURE:\n${error.message}`);
+                alert("NET UPLOAD LINK FAILURE:\n" + error.message);
             })
             .finally(() => {
                 actionBtn.innerText = "Activate Generic Asset";
                 actionBtn.disabled = false;
             });
         }
-
         function renderLifecycleHistory() {
             const tableBody = document.getElementById('history-log-rows');
             
