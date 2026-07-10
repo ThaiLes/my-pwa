@@ -720,8 +720,8 @@
                     "Content-Type": "application/json",
                     "apikey": SUPABASE_KEY,
                     "Authorization": `Bearer ${SUPABASE_KEY}`,
-                    "Accept-Profile": "api",
-                    "Content-Profile": "api"
+                    "Accept-Profile": "public",
+                    "Content-Profile": "public"
                 },
                 body: JSON.stringify(supabasePayload)
             })
@@ -733,8 +733,8 @@
                         "Content-Type": "application/json",
                         "apikey": SUPABASE_KEY,
                         "Authorization": `Bearer ${SUPABASE_KEY}`,
-                        "Accept-Profile": "api",
-                        "Content-Profile": "api"
+                        "Accept-Profile": "public",
+                        "Content-Profile": "public"
                     },
                     body: JSON.stringify(eventPayload)
                 });
