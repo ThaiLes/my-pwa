@@ -722,6 +722,7 @@
                     "Authorization": `Bearer ${SUPABASE_KEY}`,
                     "Accept-Profile": "public",
                     "Content-Profile": "public"
+                    "Resolution": "merge-duplicates"
                 },
                 body: JSON.stringify(supabasePayload)
             })
@@ -835,6 +836,7 @@
                     "Authorization": `Bearer ${SUPABASE_KEY}`,
                     "Accept-Profile": "public",
                     "Content-Profile": "public"
+                    "Resolution": "merge-duplicates"
                 },
                 body: JSON.stringify(assetPayload)
             })
