@@ -864,7 +864,7 @@
                 if (existingAssetIndex !== -1) {
                     currentLedger[existingAssetIndex] = parcelData;
                 } else {
-                    currentLedger.push(parcelData);
+                    currentLedger.push(parcelData); 
                 }
                 
                 localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger));
