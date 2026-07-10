@@ -1,946 +1,1006 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Provision Asset Dashboard V2</title>
-<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-<style>
-/* Base Reset & Industrial Dark Theme */
-body {
-font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-background-color: #1a1c20;
-color: #e2e4e9;
-margin: 0;
-padding: 0;
-display: flex;
-justify-content: center;
-align-items: flex-start;
-min-height: 100vh;
--webkit-font-smoothing: antialiased;
-}
-/* Mobile App Container Layout */
-.app-container {
-width: 100%;
-max-width: 412px;
-background: linear-gradient(180deg, #24272d 0%, #17181c 100%);
-min-height: 100vh;
-display: flex;
-flex-direction: column;
-box-sizing: border-box;
-border-left: 1px solid #2d3139;
-border-right: 1px solid #2d3139;
-}
-/* Top Navigation Header Bar */
-.header-bar {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 16px;
-border-bottom: 1px solid #2d3139;
-font-size: 14px;
-letter-spacing: 1px;
-color: #8a929e;
-flex-shrink: 0;
-}
-.header-left, .header-right {
-display: flex;
-align-items: center;
-gap: 6px;
-}
-.nav-text {
-color: #e2e4e9;
-font-weight: bold;
-}
-.version-tag {
-font-size: 10px;
-background-color: #2d3139;
-color: #ff9e22;
-padding: 2px 6px;
-border-radius: 4px;
-font-weight: bold;
-}
-/* TAB SYSTEM STYLING */
-.tab-navigation {
-display: flex;
-border-bottom: 1px solid #2d3139;
-background-color: #1d2025;
-}
-.tab-btn {
-flex: 1;
-padding: 14px;
-background: none;
-border: none;
-color: #6c7380;
-font-family: inherit;
-font-size: 11px;
-font-weight: bold;
-letter-spacing: 1px;
-text-transform: uppercase;
-cursor: pointer;
-text-align: center;
-transition: all 0.2s ease;
-}
-.tab-btn.active {
-color: #ffffff;
-background-color: #24272d;
-border-bottom: 2px solid #ff9e22;
-}
-/* View Panels Visibility Management */
-.view-panel {
-display: none;
-}
-.view-panel.active {
-display: flex;
-flex-direction: column;
-}
-/* Form Content Layout Container */
-.content {
-padding: 24px 20px;
-flex-grow: 1;
-box-sizing: border-box;
-}
-/* Core Section Typography Titles */
-.page-title {
-font-size: 20px;
-font-weight: 700;
-letter-spacing: 1.5px;
-text-transform: uppercase;
-margin: 0 0 12px 0;
-color: #ffffff;
-}
-.divider {
-height: 1px;
-background-color: #2d3139;
-margin-bottom: 24px;
-}
-.section-label {
-font-size: 11px;
-font-weight: bold;
-color: #6c7380;
-letter-spacing: 1.5px;
-text-transform: uppercase;
-margin-bottom: 8px;
-margin-top: 20px;
-}
-/* Action Mode Selection Button Group Layout */
-.mode-button-group {
-display: flex;
-gap: 12px;
-margin-bottom: 6px;
-}
-.mode-btn {
-flex: 1;
-padding: 12px;
-background-color: rgba(0, 0, 0, 0.2);
-border: 1px solid #3f4450;
-border-radius: 6px;
-color: #8a929e;
-font-family: inherit;
-font-size: 12px;
-font-weight: bold;
-letter-spacing: 1px;
-cursor: pointer;
-transition: all 0.2s ease;
-text-transform: uppercase;
-}
-.mode-btn.selected-install {
-border-color: #30d158;
-color: #30d158;
-background-color: rgba(48, 209, 88, 0.05);
-}
-.mode-btn.selected-replace {
-border-color: #ff9e22;
-color: #ff9e22;
-background-color: rgba(255, 158, 34, 0.05);
-}
-/* Interactive Scanning Data Field Box */
-.data-display-box {
-background-color: rgba(0, 0, 0, 0.3);
-border: 1px dashed #525866;
-border-radius: 6px;
-padding: 16px;
-font-size: 13px;
-letter-spacing: 0.5px;
-color: #ff9e22;
-text-align: center;
-cursor: pointer;
-transition: all 0.2s ease;
-}
-.data-display-box.locked {
-border-color: #2d3139;
-color: #4e535e;
-background-color: rgba(0, 0, 0, 0.1);
-cursor: not-allowed;
-}
-.data-display-box.scanned {
-border-style: solid;
-border-color: #30d158;
-color: #ffffff;
-background-color: rgba(48, 209, 88, 0.05);
-}
-/* TextInput Fields Layout */
-.text-input {
-width: 100%;
-background-color: rgba(0, 0, 0, 0.2);
-border: 1px solid #3f4450;
-border-radius: 6px;
-padding: 14px;
-font-family: inherit;
-font-size: 16px;
-color: #ffffff;
-box-sizing: border-box;
-margin-bottom: 12px;
-}
-/* Video Scanner Viewport Container */
-#scanner-container {
-display: none;
-width: 100%;
-background-color: #000000;
-border-radius: 8px;
-overflow: hidden;
-margin-top: 12px;
-border: 1px solid #3f4450;
-}
-#interactive-video {
-width: 100% !important;
-}
-/* Interactive Select Dropdowns */
-.select-wrapper {
-position: relative;
-}
-.select-input {
-width: 100%;
-background-color: rgba(0, 0, 0, 0.2);
-border: 1px solid #3f4450;
-border-radius: 6px;
-padding: 14px;
-font-family: inherit;
-font-size: 16px;
-color: #ffffff;
-appearance: none;
--webkit-appearance: none;
-box-sizing: border-box;
-cursor: pointer;
-}
-.select-wrapper::after {
-content: "▼";
-font-size: 10px;
-color: #6c7380;
-position: absolute;
-right: 16px;
-top: 50%;
-transform: translateY(-50%);
-pointer-events: none;
-}
-/* System Configuration Radio Form Controls */
-.radio-group {
-display: flex;
-flex-direction: column;
-gap: 12px;
-margin-top: 10px;
-}
-.radio-label {
-display: flex;
-align-items: center;
-gap: 10px;
-font-size: 16px;
-cursor: pointer;
-color: #e2e4e9;
-}
-.radio-input {
-appearance: none;
--webkit-appearance: none;
-width: 18px;
-height: 18px;
-border: 2px solid #525866;
-border-radius: 50%;
-background-color: transparent;
-display: grid;
-place-content: center;
-cursor: pointer;
-}
-.radio-input::before {
-content: "";
-width: 8px;
-height: 8px;
-border-radius: 50%;
-transform: scale(0);
-transition: 110ms transform ease-in-out;
-background-color: #ffffff;
-}
-.radio-input:checked {
-border-color: #ffffff;
-}
-.radio-input:checked::before {
-transform: scale(1);
-}
-/* Local Ledger Scrollable List Container Components */
-.ledger-container {
-background-color: rgba(0, 0, 0, 0.4);
-border: 1px solid #2d3139;
-border-radius: 6px;
-margin-top: 12px;
-max-height: 180px;
-overflow-y: auto;
-}
-.ledger-item {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 12px 14px;
-border-bottom: 1px solid #2d3139;
-font-size: 12px;
-}
-.ledger-item:last-child {
-border-bottom: none;
-}
-.ledger-meta {
-display: flex;
-flex-direction: column;
-gap: 3px;
-}
-.ledger-title {
-font-weight: bold;
-color: #ffffff;
-}
-.ledger-subtitle {
-color: #8a929e;
-font-size: 11px;
-}
-.ledger-badge {
-font-size: 10px;
-font-weight: bold;
-padding: 2px 6px;
-border-radius: 4px;
-text-transform: uppercase;
-}
-.badge-water { background-color: rgba(10, 132, 255, 0.15); color: #0a84ff; }
-.badge-elec { background-color: rgba(255, 159, 10, 0.15); color: #ff9f0a; }
-.btn-delete {
-background: none;
-border: none;
-color: #ff453a;
-cursor: pointer;
-font-size: 14px;
-padding: 4px 8px;
-}
-.log-area {
-background-color: rgba(0, 0, 0, 0.4);
-border: 1px solid #2d3139;
-border-radius: 6px;
-padding: 12px;
-font-size: 11px;
-color: #8a929e;
-margin-top: 12px;
-white-space: pre-wrap;
-}
-.btn-primary {
-width: 100%;
-background: linear-gradient(180deg, #4e535e 0%, #33373f 100%);
-border: 1px solid #525866;
-border-radius: 6px;
-color: #ffffff;
-font-family: inherit;
-font-size: 14px;
-font-weight: bold;
-letter-spacing: 2px;
-text-transform: uppercase;
-padding: 16px;
-cursor: pointer;
-display: flex;
-justify-content: center;
-align-items: center;
-gap: 8px;
-box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
-}
-.btn-primary:active {
-background: linear-gradient(180deg, #33373f 0%, #24272d 100%);
-}
-/* Audit Table History Layout */
-.history-table {
-width: 100%;
-border-collapse: collapse;
-font-size: 11px;
-text-align: left;
-margin-top: 10px;
-}
-.history-table th {
-background-color: #1e222b;
-color: #ff9e22;
-padding: 10px 8px;
-border-bottom: 2px solid #2e3440;
-text-transform: uppercase;
-font-size: 10px;
-letter-spacing: 0.5px;
-}
-.history-table td {
-padding: 10px 8px;
-border-bottom: 1px solid #2e3440;
-color: #e2e4e9;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Provision Asset Dashboard V2</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        /* Base Reset & Industrial Dark Theme */
+        body {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            background-color: #1a1c20;
+            color: #e2e4e9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Mobile App Container Layout */
+        .app-container {
+            width: 100%;
+            max-width: 412px;
+            background: linear-gradient(180deg, #24272d 0%, #17181c 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            border-left: 1px solid #2d3139;
+            border-right: 1px solid #2d3139;
+        }
+        /* Top Navigation Header Bar */
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #2d3139;
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: #8a929e;
+            flex-shrink: 0;
+        }
+        .header-left, .header-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-text {
+            color: #e2e4e9;
+            font-weight: bold;
+        }
+        .version-tag {
+            font-size: 10px;
+            background-color: #2d3139;
+            color: #ff9e22;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        /* TAB SYSTEM STYLING */
+        .tab-navigation {
+            display: flex;
+            border-bottom: 1px solid #2d3139;
+            background-color: #1d2025;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 14px;
+            background: none;
+            border: none;
+            color: #6c7380;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .tab-btn.active {
+            color: #ffffff;
+            background-color: #24272d;
+            border-bottom: 2px solid #ff9e22;
+        }
+        /* View Panels Visibility Management */
+        .view-panel {
+            display: none;
+        }
+        .view-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+        /* Form Content Layout Container */
+        .content {
+            padding: 24px 20px;
+            flex-grow: 1;
+            box-sizing: border-box;
+        }
+        /* Core Section Typography Titles */
+        .page-title {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin: 0 0 12px 0;
+            color: #ffffff;
+        }
+        .divider {
+            height: 1px;
+            background-color: #2d3139;
+            margin-bottom: 24px;
+        }
+        .section-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #6c7380;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            margin-top: 20px;
+        }
+        /* Action Mode Selection Button Group Layout */
+        .mode-button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid #3f4450;
+            border-radius: 6px;
+            color: #8a929e;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+        }
+        .mode-btn.selected-install {
+            border-color: #30d158;
+            color: #30d158;
+            background-color: rgba(48, 209, 88, 0.05);
+        }
+        .mode-btn.selected-replace {
+            border-color: #ff9e22;
+            color: #ff9e22;
+            background-color: rgba(255, 158, 34, 0.05);
+        }
+        /* Interactive Scanning Data Field Box */
+        .data-display-box {
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px dashed #525866;
+            border-radius: 6px;
+            padding: 16px;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            color: #ff9e22;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .data-display-box.locked {
+            border-color: #2d3139;
+            color: #4e535e;
+            background-color: rgba(0, 0, 0, 0.1);
+            cursor: not-allowed;
+        }
+        .data-display-box.scanned {
+            border-style: solid;
+            border-color: #30d158;
+            color: #ffffff;
+            background-color: rgba(48, 209, 88, 0.05);
+        }
+        /* TextInput Fields Layout */
+        .text-input {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid #3f4450;
+            border-radius: 6px;
+            padding: 14px;
+            font-family: inherit;
+            font-size: 16px;
+            color: #ffffff;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+        /* Video Scanner Viewport Container */
+        #scanner-container {
+            display: none;
+            width: 100%;
+            background-color: #000000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 12px;
+            border: 1px solid #3f4450;
+        }
+        #interactive-video {
+            width: 100% !important;
+        }
+        /* Interactive Select Dropdowns */
+        .select-wrapper {
+            position: relative;
+        }
+        .select-input {
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid #3f4450;
+            border-radius: 6px;
+            padding: 14px;
+            font-family: inherit;
+            font-size: 16px;
+            color: #ffffff;
+            appearance: none;
+            -webkit-appearance: none;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+        .select-wrapper::after {
+            content: "▼";
+            font-size: 10px;
+            color: #6c7380;
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        /* System Configuration Radio Form Controls */
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            color: #e2e4e9;
+        }
+        .radio-input {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #525866;
+            border-radius: 50%;
+            background-color: transparent;
+            display: grid;
+            place-content: center;
+            cursor: pointer;
+        }
+        .radio-input::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: scale(0);
+            transition: 110ms transform ease-in-out;
+            background-color: #ffffff;
+        }
+        .radio-input:checked {
+            border-color: #ffffff;
+        }
+        .radio-input:checked::before {
+            transform: scale(1);
+        }
+        /* Local Ledger Scrollable List Container Components */
+        .ledger-container {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 1px solid #2d3139;
+            border-radius: 6px;
+            margin-top: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .ledger-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            border-bottom: 1px solid #2d3139;
+            font-size: 12px;
+        }
+        .ledger-item:last-child {
+            border-bottom: none;
+        }
+        .ledger-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .ledger-title {
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .ledger-subtitle {
+            color: #8a929e;
+            font-size: 11px;
+        }
+        .ledger-badge {
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .badge-water { background-color: rgba(10, 132, 255, 0.15); color: #0a84ff; }
+        .badge-elec { background-color: rgba(255, 159, 10, 0.15); color: #ff9f0a; }
+        .btn-delete {
+            background: none;
+            border: none;
+            color: #ff453a;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+        }
+        .log-area {
+            background-color: rgba(0, 0, 0, 0.4);
+            border: 1px solid #2d3139;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 11px;
+            color: #8a929e;
+            margin-top: 12px;
+            white-space: pre-wrap;
+        }
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(180deg, #4e535e 0%, #33373f 100%);
+            border: 1px solid #525866;
+            border-radius: 6px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .btn-primary:active {
+            background: linear-gradient(180deg, #33373f 0%, #24272d 100%);
+        }
+        /* Audit Table History Layout */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            text-align: left;
+            margin-top: 10px;
+        }
+        .history-table th {
+            background-color: #1e222b;
+            color: #ff9e22;
+            padding: 10px 8px;
+            border-bottom: 2px solid #2e3440;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        .history-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #2e3440;
+            color: #e2e4e9;
+        }
+    </style>
 </head>
 <body>
-<div class="app-container">
-<div class="header-bar">
-<div class="header-left">
-<span> </span>
-<span class="nav-text">ADMIN ADM</span>
-</div>
-<div class="header-right">
-<span> </span>
-<span class="version-tag">v2.1.2-PROD</span>
-</div>
-</div>
-<div class="tab-navigation">
-<button id="tab-gateway" class="tab-btn" onclick="switchTab('gateway')">Gateway Config</button>
-<button id="tab-asset" class="tab-btn active" onclick="switchTab('asset')">Provision Asset</button>
-</div>
-<div id="scanner-container">
-<div id="interactive-video"></div>
-</div>
-<div id="view-gateway" class="content view-panel">
-<h1 class="page-title">Config Gateway</h1>
-<div class="divider"></div>
-<div class="section-label">Select Operation Mode</div>
-<div class="mode-button-group">
-<button id="btn-gw-mode-install" class="mode-btn" onclick="setGatewayOperationMode('INSTALL')">Install</button>
-<button id="btn-gw-mode-replace" class="mode-btn" onclick="setGatewayOperationMode('REPLACE')">Replace</button>
-</div>
-<div class="section-label">Scan Gateway Housing</div>
-<div id="gateway-display-box" class="data-display-box locked" onclick="handleGatewayScanClick()">
-[ SELECT MODE ABOVE ]
-</div>
-<div class="section-label">Marina / Yard Name</div>
-<input type="text" id="input-marina-name" class="text-input" placeholder="e.g. Daventry Park Marina">
-<div class="section-label">Total Number of Berths</div>
-<input type="number" id="input-berth-count" class="text-input" placeholder="e.g. 20" min="1" max="100">
-<div style="margin-top: 30px;">
-<button id="btn-activate-gateway" class="btn-primary" onclick="saveGatewayConfig()">
-Save & Initialize Site
-</button>
-</div>
-<div class="section-label">System Active Memory Registry</div>
-<div id="gateway-log" class="log-area">No active gateway configuration initialized locally.</div>
-</div>
-<div id="view-asset" class="content view-panel active">
-<h1 class="page-title">Provision Asset</h1>
-<div class="divider"></div>
-<div class="section-label">Select Deployment Mode</div>
-<div class="mode-button-group">
-<button id="btn-mode-install" class="mode-btn" onclick="setOperationMode('INSTALL')">Install</button>
-<button id="btn-mode-replace" class="mode-btn" onclick="setOperationMode('REPLACE')">Replace</button>
-</div>
-<div class="section-label">Hardware Identifier</div>
-<div id="asset-display-box" class="data-display-box locked" onclick="handleAssetScanClick()">
-[ SELECT INSTALL OR REPLACE MODE ABOVE ]
-</div>
-<div class="section-label">Assign Physical Location</div>
-<div class="select-wrapper">
-<select id="select-berth-id" class="select-input">
-<option value="" disabled selected>[ Select Berth ]</option>
-</select>
-</div>
-<div class="section-label">Optional Boat Name Allocation</div>
-<input type="text" id="input-boat-name" class="text-input" placeholder="Enter boat name (e.g. Sea Seeker)">
-<div class="section-label">Utility Type Configuration</div>
-<div class="radio-group">
-<label class="radio-label">
-<input type="radio" name="utility" value="Water Meter" class="radio-input" checked> Water Meter
-</label>
-<label class="radio-label">
-<input type="radio" name="utility" value="Shore Electricity" class="radio-input"> Shore Electricity
-</label>
-</div>
-<div style="margin-top: 24px;">
-<button id="btn-activate-asset" class="btn-primary" onclick="saveAssetProvision()">
-Activate Generic Asset
-</button>
-</div>
-<div class="section-label">Active Asset Deployment Ledger</div>
-<div id="asset-ledger-list" class="ledger-container"></div>
-</div>
-<div class="content" style="padding-top: 0px;">
-<div class="section-label"> SYSTEM LIFECYCLE HISTORY LOG</div>
-<div class="ledger-container" style="max-height: 250px;">
-<table class="history-table">
-<thead>
-<tr>
-<th>Date</th>
-<th>Time</th>
-<th>Action</th>
-<th>Location</th>
-<th>Utility</th>
-<th>Target PUCK</th>
-<th>Replaced ID</th>
-</tr>
-</thead>
-<tbody id="history-log-rows">
-<tr><td colspan="7" style="text-align:center; padding:16px; color:#4e535e;">Initializing history log tracking pipeline...</td></tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<script>
-let html5QrcodeScanner = null;
-let currentScanTarget = null;
-let scannableActive = false;
-let currentOperationMode = null;
-let currentGatewayOperationMode = null;
-const SUPABASE_BASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG
-1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
-const ADMIN_PIN = "1234";
-window.onload = function() {
-renderLogs();
-updateBerthDropdown();
-renderAssetLedger();
-renderLifecycleHistory();
-};
-function setGatewayOperationMode(mode) {
-currentGatewayOperationMode = mode;
-const installBtn = document.getElementById('btn-gw-mode-install');
-const replaceBtn = document.getElementById('btn-gw-mode-replace');
-const scanBox = document.getElementById('gateway-display-box');
-scanBox.classList.remove('locked', 'scanned');
-scanBox.innerText = "[ TAP TO SCAN GATEWAY QR CODE ]";
-if (mode === 'INSTALL') {
-installBtn.classList.add('selected-install');
-replaceBtn.classList.remove('selected-replace');
-} else if (mode === 'REPLACE') {
-replaceBtn.classList.add('selected-replace');
-installBtn.classList.remove('selected-install');
-}
-}
-function setOperationMode(mode) {
-currentOperationMode = mode;
-const installBtn = document.getElementById('btn-mode-install');
-const replaceBtn = document.getElementById('btn-mode-replace');
-const scanBox = document.getElementById('asset-display-box');
-const selectDropdown = document.getElementById('select-berth-id');
-const boatInput = document.getElementById('input-boat-name');
-scanBox.classList.remove('locked', 'scanned');
-scanBox.innerText = "[ TAP TO SCAN PUCK QR CODE ]";
-if (mode === 'INSTALL') {
-installBtn.classList.add('selected-install');
-replaceBtn.classList.remove('selected-replace');
-} else if (mode === 'REPLACE') {
-replaceBtn.classList.add('selected-replace');
-installBtn.classList.remove('selected-install');
-}
-// Sync boat name instantly if mode changes while a berth is selected
-if (selectDropdown.value) {
-const currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
-const existingAsset = currentLedger.find(item => item.berthId === selectDropdown.value);
-if (existingAsset && existingAsset.boatName && existingAsset.boatName !== "Unallocated Berth") {
-boatInput.value = existingAsset.boatName;
-} else {
-boatInput.value = "";
-}
-}
-}
-function handleGatewayScanClick() {
-if (!currentGatewayOperationMode) {
-alert("ATTENTION: You must select INSTALL or REPLACE mode before scanning gateway housing.");
-return;
-}
-startScanning('gateway');
-}
-function handleAssetScanClick() {
-if (!currentOperationMode) {
-alert("ATTENTION: You must select INSTALL or REPLACE mode before scanning hardware.");
-return;
-}
-startScanning('asset');
-}
-function switchTab(targetTab) {
-if (html5QrcodeScanner && scannableActive) {
-html5QrcodeScanner.stop().then(() => {
-scannableActive = false;
-document.getElementById('scanner-container').style.display = 'none';
-executeTabSwap(targetTab);
-}).catch(() => {
-document.getElementById('scanner-container').style.display = 'none';
-executeTabSwap(targetTab);
-});
-} else {
-executeTabSwap(targetTab);
-}
-}
-function executeTabSwap(targetTab) {
-if (targetTab === 'gateway') {
-const enteredPin = prompt("Enter 4-Digit Administrator Security PIN:");
-if (enteredPin !== ADMIN_PIN) {
-alert("ACCESS DENIED: Invalid Security Credentials.");
-return;
-}
-document.getElementById('view-gateway').classList.add('active');
-document.getElementById('view-asset').classList.remove('active');
-document.getElementById('tab-gateway').classList.add('active');
-document.getElementById('tab-asset').classList.remove('active');
-} else {
-updateBerthDropdown();
-renderAssetLedger();
-document.getElementById('view-asset').classList.add('active');
-document.getElementById('view-gateway').classList.remove('active');
-document.getElementById('tab-asset').classList.add('active');
-document.getElementById('tab-gateway').classList.remove('active');
-}
-}
-function startScanning(target) {
-currentScanTarget = target;
-const displayBoxId = target === 'gateway' ? 'gateway-display-box' : 'asset-display-box';
-const displayBox = document.getElementById(displayBoxId);
-const scannerContainer = document.getElementById('scanner-container');
-scannerContainer.style.display = 'block';
-displayBox.innerText = "[ ACQUIRING HARDWARE CAMERA... ]";
-if (html5QrcodeScanner) {
-try { html5QrcodeScanner.clear(); } catch(e){}
-}
-setTimeout(() => {
-html5QrcodeScanner = new Html5Qrcode("interactive-video");
-scannableActive = true;
-const cameraConfig = {
-fps: 10,
-qrbox: function (viewfinderWidth, viewfinderHeight) {
-const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-const edgeSize = Math.floor(minEdge * 0.65);
-return { width: edgeSize, height: edgeSize };
-}
-};
-html5QrcodeScanner.start(
-{ facingMode: "environment" },
-cameraConfig,
-(decodedText) => {
-displayBox.innerText = decodedText;
-displayBox.classList.add('scanned');
-stopScanning();
-},
-(errorMessage) => {}
-).catch(err => {
-displayBox.innerText = (target === 'gateway' ? "GW-PRO-" : "PUCK-FRESH-") + Math.floor(1000 + Math.random() * 9000);
-displayBox.classList.add('scanned');
-document.getElementById('scanner-container').style.display = 'none';
-});
-}, 300);
-}
-function stopScanning() {
-if (html5QrcodeScanner && scannableActive) {
-html5QrcodeScanner.stop().then(() => {
-scannableActive = false;
-document.getElementById('scanner-container').style.display = 'none';
-}).catch(() => {});
-document.getElementById('scanner-container').style.display = 'none';
-} else {
-document.getElementById('scanner-container').style.display = 'none';
-}
-}
-function saveGatewayConfig() {
-const gatewayId = document.getElementById('gateway-display-box').innerText;
-const marinaName = document.getElementById('input-marina-name').value;
-const berthCount = document.getElementById('input-berth-count').value;
-if (!marinaName || !berthCount || gatewayId.includes("SELECT") || gatewayId.includes("TAP")) {
-alert("ERROR: Missing parameters or un-scanned Gateway ID.");
-return;
-}
-const actionBtn = document.getElementById('btn-activate-gateway');
-actionBtn.innerText = "[ TRANSMITTING... ]";
-actionBtn.disabled = true;
-const configObject = {
-gatewayId: gatewayId,
-marinaName: marinaName,
-berthCount: parseInt(berthCount),
-timestamp: new Date().toLocaleString()
-};
-const supabasePayload = {
-gateway_id: gatewayId,
-marina_name: marinaName,
-max_berth_slots: parseInt(berthCount, 10)
-};
-const eventPayload = {
-event_date: new Date().toISOString().split('T')[0],
-event_time: new Date().toTimeString().split(' ')[0],
-gateway_id: gatewayId,
-marina_name: marinaName,
-activity_type: `GW_${currentGatewayOperationMode}`,
-location_id: "MAIN_HUSBANDRY",
-puck_id: "NONE_GW_LEVEL",
-utility_type: "INFRASTRUCTURE",
-operational_status: "ACTIVE"
-};
-fetch(`${SUPABASE_BASE_URL}/site_registry`, {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-"apikey": SUPABASE_KEY,
-"Authorization": `Bearer ${SUPABASE_KEY}`,
-"Accept-Profile": "api",
-"Content-Profile": "api"
-},
-body: JSON.stringify(supabasePayload)
-})
-.then(res => {
-if (!res.ok) throw new Error(`Registry Error Code: ${res.status}`);
-return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-"apikey": SUPABASE_KEY,
-"Authorization": `Bearer ${SUPABASE_KEY}`,
-"Accept-Profile": "api",
-"Content-Profile": "api"
-},
-body: JSON.stringify(eventPayload)
-});
-})
-.then(res => {
-if (!res.ok) throw new Error(`Gateway Audit Trail Error: ${res.status}`);
-localStorage.setItem("activeGateway", JSON.stringify(configObject));
-renderLogs();
-updateBerthDropdown();
-renderLifecycleHistory();
-alert(`SUCCESS:\n${marinaName} registered with ${berthCount} slots via ${currentGatewayOperationMode} operation.`);
-})
-.catch(err => {
-console.error(err);
-alert(`SYNC LOCKOUT FAILURE:\n${err.message}`);
-})
-.finally(() => {
-actionBtn.innerText = "Save & Initialize Site";
-actionBtn.disabled = false;
-});
-}
-function saveAssetProvision() {
-const gatewayData = localStorage.getItem("activeGateway");
-if (!gatewayData) {
-alert("ERROR: No active Site Gateway provisioned. Initialize a gateway configuration first.");
-return;
-}
-const activeGateway = JSON.parse(gatewayData);
-if (!currentOperationMode) {
-alert("ERROR: Select deployment mode parameter [INSTALL] or [REPLACE] first.");
-return;
-}
-const puckId = document.getElementById('asset-display-box').innerText;
-if (puckId.includes("SELECT") || puckId.includes("TAP")) {
-alert("ERROR: No valid PUCK hardware ID scanned.");
-return;
-}
-const berthId = document.getElementById('select-berth-id').value;
-if (!berthId) {
-alert("ERROR: Please select a target location berth.");
-return;
-}
-const boatName = document.getElementById('input-boat-name').value.trim() || "Unallocated Berth";
-const utilityType = document.querySelector('input[name="utility"]:checked').value;
-let currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
-const existingAssetIndex = currentLedger.findIndex(item => item.berthId === berthId);
-const oldPuckId = (existingAssetIndex !== -1) ? currentLedger[existingAssetIndex].puckId : "";
-let parcelData = {
-gatewayId: activeGateway.gatewayId,
-marinaName: activeGateway.marinaName,
-berthId: berthId,
-puckId: puckId,
-utilityType: utilityType,
-boatName: boatName,
-timestamp: new Date().toLocaleString(),
-deploymentMode: currentOperationMode,
-replacedHardwareId: currentOperationMode === 'REPLACE' ? oldPuckId : ""
-};
-const actionBtn = document.getElementById('btn-activate-asset');
-actionBtn.innerText = "[ TRANSMITTING TO LEDGER... ]";
-actionBtn.disabled = true;
-const assetPayload = {
-berth_id: parseInt(berthId, 10),
-gateway_id: activeGateway.gatewayId,
-puck_id: puckId,
-utility_type: utilityType
-};
-const eventPayload = {
-event_date: new Date().toISOString().split('T')[0],
-event_time: new Date().toTimeString().split(' ')[0],
-gateway_id: activeGateway.gatewayId,
-marina_name: activeGateway.marinaName,
-activity_type: currentOperationMode,
-location_id: `Berth-${berthId}`,
-puck_id: puckId,
-utility_type: `${utilityType} (${boatName})`,
-// Passes both camelCase and snake_case properties to bypass schema strictness
-replaced_hardware_id: currentOperationMode === 'REPLACE' ? oldPuckId : "",
-replacedHardwareId: currentOperationMode === 'REPLACE' ? oldPuckId : "",
-operational_status: "ACTIVE"
-};
-fetch(`${SUPABASE_BASE_URL}/asset_ledger`, {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-"apikey": SUPABASE_KEY,
-"Authorization": `Bearer ${SUPABASE_KEY}`,
-"Accept-Profile": "api",
-"Content-Profile": "api"
-},
-body: JSON.stringify(assetPayload)
-})
-.then(res => {
-if (!res.ok) throw new Error(`Asset Ledger Sync Rejection (Status ${res.status})`);
-return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
-method: "POST",
-headers: {
-"Content-Type": "application/json",
-"apikey": SUPABASE_KEY,
-"Authorization": `Bearer ${SUPABASE_KEY}`,
-"Accept-Profile": "api",
-"Content-Profile": "api"
-},
-body: JSON.stringify(eventPayload)
-});
-})
-.then(res => {
-if (!res.ok) throw new Error(`History Trace Rejection (Status ${res.status})`);
-if (existingAssetIndex !== -1) {
-currentLedger[existingAssetIndex] = parcelData;
-} else {
-currentLedger.push(parcelData);
-}
-localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger));
-renderAssetLedger();
-resetAssetForm();
-renderLifecycleHistory();
-alert(`SUCCESS: Assets and dynamic metadata successfully mapped to ledger.`);
-})
-.catch(error => {
-console.error(error);
-alert(`NET UPLOAD LINK FAILURE:\n${error.message}`);
-})
-.finally(() => {
-actionBtn.innerText = "Activate Generic Asset";
-actionBtn.disabled = false;
-});
-}
-function renderLifecycleHistory() {
-const tableBody = document.getElementById('history-log-rows');
-fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
-method: "GET",
-headers: {
-"apikey": SUPABASE_KEY,
-"Authorization": `Bearer ${SUPABASE_KEY}`,
-"Accept-Profile": "api"
-}
-})
-.then(res => res.json())
-.then(data => {
-if (!data || data.length === 0) {
-tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:16px; color:#4e535e;">No historical actions logged.</td></tr>`;
-return;
-}
-data.sort((a, b) => {
-return b.id - a.id;
-});
-tableBody.innerHTML = "";
-data.forEach(event => {
-const row = document.createElement('tr');
-const actionColor = event.activity_type.includes('INSTALL') ? '#30d158' : '#ff9e22';
-const splitDate = event.event_date || "—";
-const splitTime = event.event_time || "—";
-row.innerHTML = `
-<td style="color:#a0a6b5;">${splitDate}</td>
-<td style="color:#888e9b;">${splitTime}</td>
-<td style="font-weight:bold; color:${actionColor};">${event.activity_type}</td>
-<td>${event.location_id || 'N/A'}</td>
-<td>${event.utility_type || '—'}</td>
-<td style="font-family:monospace; color:#e5c07b;">${event.puck_id}</td>
-<td style="font-family:monospace; color:#e06c75;">${event.replaced_hardware_id || '—'}</td>
-`;
-tableBody.appendChild(row);
-});
-})
-.catch(err => {
-tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:16px; color:#e06c75;">History unavailable: ${err.message}</td></tr>`;
-});
-}
-function updateBerthDropdown() {
-const selectDropdown = document.getElementById('select-berth-id');
-const boatInput = document.getElementById('input-boat-name');
-const savedData = localStorage.getItem("activeGateway");
-selectDropdown.innerHTML = '<option value="" disabled selected>[ Select Berth ]</option>';
-let count = 10;
-if (savedData) {
-const parsed = JSON.parse(savedData);
-count = parsed.berthCount;
-}
-for (let i = 1; i <= count; i++) {
-const option = document.createElement('option');
-option.value = i;
-option.innerText = `Berth ${i}`;
-selectDropdown.appendChild(option);
-}
-// Continuous dynamic listener mapping boat names onto active select layouts
-selectDropdown.onchange = function() {
-const selectedBerth = selectDropdown.value;
-const currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
-const existingAsset = currentLedger.find(item => item.berthId === selectedBerth);
-if (existingAsset && existingAsset.boatName && existingAsset.boatName !== "Unallocated Berth") {
-boatInput.value = existingAsset.boatName;
-} else {
-boatInput.value = "";
-}
-};
-}
-function renderLogs() {
-const savedData = localStorage.getItem("activeGateway");
-const logBox = document.getElementById('gateway-log');
-if (savedData) {
-const parsed = JSON.parse(savedData);
-logBox.innerText = `[ACTIVE SITE REGISTRY ]\nYard Name: ${parsed.marinaName}\nGateway: ${parsed.gatewayId}\nMax Slots: ${parsed.berthCount}\nInitialized: ${parsed.timestamp}`;
-}
-}
-function renderAssetLedger() {
-const container = document.getElementById('asset-ledger-list');
-const currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
-if (currentLedger.length === 0) {
-container.innerHTML = '<div style="padding: 16px; text-align: center; color: #4e535e; font-size:11px;">No assets provisioned on this ledger.</div>';
-return;
-}
-currentLedger.sort((a, b) => parseInt(a.berthId) - parseInt(b.berthId));
-container.innerHTML = "";
-currentLedger.forEach(item => {
-const badgeClass = item.utilityType === 'Water Meter' ? 'badge-water' : 'badge-elec';
-const boatMeta = item.boatName ? `<div style="color:#30d158; font-size:11px; margin-top:2px;"> Vessel: ${item.boatName}</div>` : '';
-const row = document.createElement('div');
-row.className = 'ledger-item';
-row.innerHTML = `
-<div class="ledger-meta">
-<span class="ledger-title">Berth ${item.berthId} &rarr; <span style="color:#ff9e22;">${item.puckId}</span></span>
-${boatMeta}
-<span class="ledger-subtitle">Stamping: ${item.timestamp}</span>
-</div>
-<div style="display: flex; align-items: center; gap: 8px;">
-<span class="ledger-badge ${badgeClass}">${item.utilityType === 'Water Meter' ? 'Water' : 'Elec'}</span>
-<button class="btn-delete" onclick="deleteAssetRecord('${item.berthId}')">×</button>
-</div>
-`;
-container.appendChild(row);
-});
-}
-function deleteAssetRecord(berthId) {
-if (!confirm(`CAUTION: De-provision Berth ${berthId}? This clears its record from the local mapping ledger container.`)) return;
-let currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
-currentLedger = currentLedger.filter(item => item.berthId !== berthId);
-localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger));
-renderAssetLedger();
-}
-function resetAssetForm() {
-currentOperationMode = null;
-document.getElementById('btn-mode-install').classList.remove('selected-install');
-document.getElementById('btn-mode-replace').classList.remove('selected-replace');
-const scanBox = document.getElementById('asset-display-box');
-scanBox.className = 'data-display-box locked';
-scanBox.innerText = "[SELECT INSTALL OR REPLACE MODE ABOVE ]";
-document.getElementById('select-berth-id').selectedIndex = 0;
-document.getElementById('input-boat-name').value = "";
-}
-</script>
+    <div class="app-container">
+        <div class="header-bar">
+            <div class="header-left">
+                <span class="nav-text">ADMIN ADM</span>
+            </div>
+            <div class="header-right">
+                <span class="version-tag">v2.1.2-PROD</span>
+            </div>
+        </div>
+        
+        <div class="tab-navigation">
+            <button id="tab-gateway" class="tab-btn" onclick="switchTab('gateway')">Gateway Config</button>
+            <button id="tab-asset" class="tab-btn active" onclick="switchTab('asset')">Provision Asset</button>
+        </div>
+
+        <div id="scanner-container">
+            <div id="interactive-video"></div>
+        </div>
+
+        <div id="view-gateway" class="content view-panel">
+            <h1 class="page-title">Config Gateway</h1>
+            <div class="divider"></div>
+            <div class="section-label">Select Operation Mode</div>
+            <div class="mode-button-group">
+                <button id="btn-gw-mode-install" class="mode-btn" onclick="setGatewayOperationMode('INSTALL')">Install</button>
+                <button id="btn-gw-mode-replace" class="mode-btn" onclick="setGatewayOperationMode('REPLACE')">Replace</button>
+            </div>
+            <div class="section-label">Scan Gateway Housing</div>
+            <div id="gateway-display-box" class="data-display-box locked" onclick="handleGatewayScanClick()">
+                [SELECT MODE ABOVE ]
+            </div>
+            <div class="section-label">Marina / Yard Name</div>
+            <input type="text" id="input-marina-name" class="text-input" placeholder="e.g. Daventry Park Marina">
+            <div class="section-label">Total Number of Berths</div>
+            <input type="number" id="input-berth-count" class="text-input" placeholder="e.g. 20" min="1" max="100">
+            <div style="margin-top: 30px;">
+                <button id="btn-activate-gateway" class="btn-primary" onclick="saveGatewayConfig()">
+                    Save & Initialize Site
+                </button>
+            </div>
+            <div class="section-label">System Active Memory Registry</div>
+            <div id="gateway-log" class="log-area">No active gateway configuration initialized locally.</div>
+        </div>
+
+        <div id="view-asset" class="content view-panel active">
+            <h1 class="page-title">Provision Asset</h1>
+            <div class="divider"></div>
+            <div class="section-label">Select Deployment Mode</div>
+            <div class="mode-button-group">
+                <button id="btn-mode-install" class="mode-btn" onclick="setOperationMode('INSTALL')">Install</button>
+                <button id="btn-mode-replace" class="mode-btn" onclick="setOperationMode('REPLACE')">Replace</button>
+            </div>
+            <div class="section-label">Hardware Identifier</div>
+            <div id="asset-display-box" class="data-display-box locked" onclick="handleAssetScanClick()">
+                [SELECT INSTALL OR REPLACE MODE ABOVE ]
+            </div>
+            <div class="section-label">Assign Physical Location</div>
+            <div class="select-wrapper">
+                <select id="select-berth-id" class="select-input">
+                    <option value="" disabled selected>[ Select Berth ]</option>
+                </select>
+            </div>
+            <div class="section-label">Optional Boat Name Allocation</div>
+            <input type="text" id="input-boat-name" class="text-input" placeholder="Enter boat name (e.g. Sea Seeker)">
+            <div class="section-label">Utility Type Configuration</div>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="utility" value="Water Meter" class="radio-input" checked> Water Meter
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="utility" value="Shore Electricity" class="radio-input"> Shore Electricity
+                </label>
+            </div>
+            <div style="margin-top: 24px;">
+                <button id="btn-activate-asset" class="btn-primary" onclick="saveAssetProvision()">
+                    Activate Generic Asset
+                </button>
+            </div>
+            <div class="section-label">Active Asset Deployment Ledger</div>
+            <div id="asset-ledger-list" class="ledger-container"></div>
+        </div>
+
+        <div class="content" style="padding-top: 0px;">
+            <div class="section-label">SYSTEM LIFECYCLE HISTORY LOG</div>
+            <div class="ledger-container" style="max-height: 250px;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Location</th>
+                            <th>Utility</th>
+                            <th>Target PUCK</th>
+                            <th>Replaced ID</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-log-rows">
+                        <tr><td colspan="7" style="text-align:center; padding:16px; color:#4e535e;">Initializing history log tracking pipeline...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let html5QrcodeScanner = null;
+        let currentScanTarget = null;
+        let scannableActive = false;
+        let currentOperationMode = null;
+        let currentGatewayOperationMode = null;
+        
+        const SUPABASE_BASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
+        const ADMIN_PIN = "1234";
+
+        window.onload = function() {
+            renderLogs();
+            updateBerthDropdown();
+            renderAssetLedger();
+            renderLifecycleHistory();
+        };
+
+        function setGatewayOperationMode(mode) {
+            currentGatewayOperationMode = mode;
+            const installBtn = document.getElementById('btn-gw-mode-install');
+            const replaceBtn = document.getElementById('btn-gw-mode-replace');
+            const scanBox = document.getElementById('gateway-display-box');
+            
+            scanBox.classList.remove('locked', 'scanned');
+            scanBox.innerText = "[TAP TO SCAN GATEWAY QR CODE ]";
+            
+            if (mode === 'INSTALL') {
+                installBtn.classList.add('selected-install');
+                replaceBtn.classList.remove('selected-replace');
+            } else if (mode === 'REPLACE') {
+                replaceBtn.classList.add('selected-replace');
+                installBtn.classList.remove('selected-install');
+            }
+        }
+
+        function setOperationMode(mode) {
+            currentOperationMode = mode;
+            const installBtn = document.getElementById('btn-mode-install');
+            const replaceBtn = document.getElementById('btn-mode-replace');
+            const scanBox = document.getElementById('asset-display-box');
+            const selectDropdown = document.getElementById('select-berth-id');
+            const boatInput = document.getElementById('input-boat-name');
+            
+            scanBox.classList.remove('locked', 'scanned');
+            scanBox.innerText = "[TAP TO SCAN PUCK QR CODE ]";
+            
+            if (mode === 'INSTALL') {
+                installBtn.classList.add('selected-install');
+                replaceBtn.classList.remove('selected-replace');
+            } else if (mode === 'REPLACE') {
+                replaceBtn.classList.add('selected-replace');
+                installBtn.classList.remove('selected-install');
+            }
+            
+            if (selectDropdown.value) {
+                const currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+                const existingAsset = currentLedger.find(item => item.berthId === selectDropdown.value);
+                if (existingAsset && existingAsset.boatName && existingAsset.boatName !== "Unallocated Berth") {
+                    boatInput.value = existingAsset.boatName;
+                } else {
+                    boatInput.value = "";
+                }
+            }
+        }
+
+        function handleGatewayScanClick() {
+            if (!currentGatewayOperationMode) {
+                alert("ATTENTION: You must select INSTALL or REPLACE mode before scanning gateway housing.");
+                return;
+            }
+            startScanning('gateway');
+        }
+
+        function handleAssetScanClick() {
+            if (!currentOperationMode) {
+                alert("ATTENTION: You must select INSTALL or REPLACE mode before scanning hardware.");
+                return;
+            }
+            startScanning('asset');
+        }
+
+        function switchTab(targetTab) {
+            if (html5QrcodeScanner && scannableActive) {
+                html5QrcodeScanner.stop().then(() => {
+                    scannableActive = false;
+                    document.getElementById('scanner-container').style.display = 'none';
+                    executeTabSwap(targetTab);
+                }).catch(() => {
+                    document.getElementById('scanner-container').style.display = 'none';
+                    executeTabSwap(targetTab);
+                });
+            } else {
+                executeTabSwap(targetTab);
+            }
+        }
+
+        function executeTabSwap(targetTab) {
+            if (targetTab === 'gateway') {
+                const enteredPin = prompt("Enter 4-Digit Administrator Security PIN:");
+                if (enteredPin !== ADMIN_PIN) {
+                    alert("ACCESS DENIED: Invalid Security Credentials.");
+                    return;
+                }
+                document.getElementById('view-gateway').classList.add('active');
+                document.getElementById('view-asset').classList.remove('active');
+                document.getElementById('tab-gateway').classList.add('active');
+                document.getElementById('tab-asset').classList.remove('active');
+            } else {
+                updateBerthDropdown();
+                renderAssetLedger();
+                document.getElementById('view-asset').classList.add('active');
+                document.getElementById('view-gateway').classList.remove('active');
+                document.getElementById('tab-asset').classList.add('active');
+                document.getElementById('tab-gateway').classList.remove('active');
+            }
+        }
+
+        function startScanning(target) {
+            currentScanTarget = target;
+            const displayBoxId = target === 'gateway' ? 'gateway-display-box' : 'asset-display-box';
+            const displayBox = document.getElementById(displayBoxId);
+            const scannerContainer = document.getElementById('scanner-container');
+            
+            scannerContainer.style.display = 'block';
+            displayBox.innerText = "[ ACQUIRING HARDWARE CAMERA... ]";
+            
+            if (html5QrcodeScanner) {
+                try { html5QrcodeScanner.clear(); } catch(e){}
+            }
+            
+            setTimeout(() => {
+                html5QrcodeScanner = new Html5Qrcode("interactive-video");
+                scannableActive = true;
+                const cameraConfig = {
+                    fps: 10,
+                    qrbox: function (viewfinderWidth, viewfinderHeight) {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const edgeSize = Math.floor(minEdge * 0.65);
+                        return { width: edgeSize, height: edgeSize };
+                    }
+                };
+                
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" },
+                    cameraConfig,
+                    (decodedText) => {
+                        displayBox.innerText = decodedText;
+                        displayBox.classList.add('scanned');
+                        stopScanning();
+                    },
+                    (errorMessage) => {}
+                ).catch(err => {
+                    displayBox.innerText = (target === 'gateway' ? "GW-PRO-" : "PUCK-FRESH-") + Math.floor(1000 + Math.random() * 9000);
+                    displayBox.classList.add('scanned');
+                    document.getElementById('scanner-container').style.display = 'none';
+                });
+            }, 300);
+        }
+
+        function stopScanning() {
+            if (html5QrcodeScanner && scannableActive) {
+                html5QrcodeScanner.stop().then(() => {
+                    scannableActive = false;
+                    document.getElementById('scanner-container').style.display = 'none';
+                }).catch(() => {
+                    document.getElementById('scanner-container').style.display = 'none';
+                });
+            } else {
+                document.getElementById('scanner-container').style.display = 'none';
+            }
+        }
+
+        function saveGatewayConfig() {
+            const gatewayId = document.getElementById('gateway-display-box').innerText;
+            const marinaName = document.getElementById('input-marina-name').value.trim();
+            const berthCount = document.getElementById('input-berth-count').value;
+            
+            if (!marinaName || !berthCount || gatewayId.includes("SELECT") || gatewayId.includes("TAP")) {
+                alert("ERROR: Missing parameters or un-scanned Gateway ID.");
+                return;
+            }
+            
+            const actionBtn = document.getElementById('btn-activate-gateway');
+            actionBtn.innerText = "[TRANSMITTING... ]";
+            actionBtn.disabled = true;
+            
+            const configObject = {
+                gatewayId: gatewayId,
+                marinaName: marinaName,
+                berthCount: parseInt(berthCount, 10),
+                timestamp: new Date().toLocaleString()
+            };
+            
+            const supabasePayload = {
+                gateway_id: gatewayId,
+                marina_name: marinaName,
+                max_berth_slots: parseInt(berthCount, 10)
+            };
+            
+            const eventPayload = {
+                event_date: new Date().toISOString().split('T')[0],
+                event_time: new Date().toTimeString().split(' ')[0],
+                gateway_id: gatewayId,
+                marina_name: marinaName,
+                activity_type: `GW_${currentGatewayOperationMode}`,
+                location_id: "MAIN_HUSBANDRY",
+                puck_id: "NONE_GW_LEVEL",
+                utility_type: "INFRASTRUCTURE",
+                operational_status: "ACTIVE"
+            };
+            
+            fetch(`${SUPABASE_BASE_URL}/site_registry`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`,
+                    "Accept-Profile": "public",
+                    "Content-Profile": "public",
+                    "Resolution": "merge-duplicates"
+                },
+                body: JSON.stringify(supabasePayload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`Registry Error Code: ${res.status}`);
+                return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`,
+                        "Accept-Profile": "public",
+                        "Content-Profile": "public",
+                        "Resolution": "merge-duplicates"
+                    },
+                    body: JSON.stringify(eventPayload)
+                });
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`Gateway Audit Trail Error: ${res.status}`);
+                localStorage.setItem("activeGateway", JSON.stringify(configObject));
+                renderLogs();
+                updateBerthDropdown();
+                renderLifecycleHistory();
+                alert(`SUCCESS:\n${marinaName} registered with ${berthCount} slots via ${currentGatewayOperationMode} operation.`);
+            })
+            .catch(err => {
+                console.error(err);
+                alert(`SYNC LOCKOUT FAILURE:\n${err.message}`);
+            })
+            .finally(() => {
+                actionBtn.innerText = "Save & Initialize Site";
+                actionBtn.disabled = false;
+            });
+        }
+
+        function saveAssetProvision() {
+            const gatewayData = localStorage.getItem("activeGateway");
+            if (!gatewayData) {
+                alert("ERROR: No active Site Gateway provisioned. Initialize a gateway configuration first.");
+                return;
+            }
+            
+            const activeGateway = JSON.parse(gatewayData);
+            if (!currentOperationMode) {
+                alert("ERROR: Select deployment mode parameter [INSTALL] or [REPLACE] first.");
+                return;
+            }
+            
+            const puckId = document.getElementById('asset-display-box').innerText;
+            if (puckId.includes("SELECT") || puckId.includes("TAP")) {
+                alert("ERROR: No valid PUCK hardware ID scanned.");
+                return;
+            }
+            
+            const berthId = document.getElementById('select-berth-id').value;
+            if (!berthId) {
+                alert("ERROR: Please select a target location berth.");
+                return;
+            }
+
+            const boatName = document.getElementById('input-boat-name').value.trim() || "Unallocated Berth";
+            const utilityType = document.querySelector('input[name="utility"]:checked').value;
+            
+            let currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+            const existingAssetIndex = currentLedger.findIndex(item => item.berthId === berthId);
+            const oldPuckId = (existingAssetIndex !== -1) ? currentLedger[existingAssetIndex].puckId : "";
+            
+            let parcelData = {
+                gatewayId: activeGateway.gatewayId,
+                marinaName: activeGateway.marinaName,
+                berthId: berthId,
+                puckId: puckId,
+                utilityType: utilityType,
+                boatName: boatName,
+                timestamp: new Date().toLocaleString(),
+                deploymentMode: currentOperationMode,
+                replacedHardwareId: currentOperationMode === 'REPLACE' ? oldPuckId : ""
+            };
+
+            const actionBtn = document.getElementById('btn-activate-asset');
+            actionBtn.innerText = "[TRANSMITTING TO LEDGER... ]";
+            actionBtn.disabled = true;
+
+            const assetPayload = {
+                berth_id: parseInt(berthId, 10),
+                gateway_id: activeGateway.gatewayId,
+                puck_id: puckId,
+                utility_type: utilityType
+            };
+
+            const eventPayload = {
+                event_date: new Date().toISOString().split('T')[0],
+                event_time: new Date().toTimeString().split(' ')[0],
+                gateway_id: activeGateway.gatewayId,
+                marina_name: activeGateway.marinaName,
+                activity_type: currentOperationMode,
+                location_id: `Berth-${berthId}`,
+                puck_id: puckId,
+                utility_type: `${utilityType} (${boatName})`,
+                replaced_hardware_id: currentOperationMode === 'REPLACE' ? oldPuckId : "",
+                replacedHardwareId: currentOperationMode === 'REPLACE' ? oldPuckId : "",
+                operational_status: "ACTIVE"
+            };
+
+            fetch(`${SUPABASE_BASE_URL}/asset_ledger`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`,
+                    "Accept-Profile": "public",
+                    "Content-Profile": "public",
+                    "Resolution": "merge-duplicates"
+                },
+                body: JSON.stringify(assetPayload)
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`Asset Ledger Sync Rejection (Status ${res.status})`);
+                return fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`,
+                        "Accept-Profile": "public",
+                        "Content-Profile": "public",
+                        "Resolution": "merge-duplicates"
+                    },
+                    body: JSON.stringify(eventPayload)
+                });
+            })
+            .then(res => {
+                if (!res.ok) throw new Error(`History Trace Rejection (Status ${res.status})`);
+                
+                if (existingAssetIndex !== -1) {
+                    currentLedger[existingAssetIndex] = parcelData;
+                } else {
+                    currentLedger.push(parcelData);
+                }
+                
+                localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger));
+                renderAssetLedger();
+                resetAssetForm();
+                renderLifecycleHistory();
+                alert("SUCCESS: Assets and dynamic metadata successfully mapped to ledger.");
+            })
+            .catch(error => {
+                console.error(error);
+                alert("NET UPLOAD LINK FAILURE:\n" + error.message);
+            })
+            .finally(() => {
+                actionBtn.innerText = "Activate Generic Asset";
+                actionBtn.disabled = false;
+            });
+        }
+
+        function deleteAssetRecord(berthId) {
+            if (!confirm(`CAUTION: De-provision Berth ${berthId}? This clears its record from the local mapping ledger container.`)) return;
+            
+            let currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+            currentLedger = currentLedger.filter(item => item.berthId !== berthId);
+            localStorage.setItem("provisionedAssets", JSON.stringify(currentLedger));
+            renderAssetLedger();
+        }
+
+        function resetAssetForm() {
+            currentOperationMode = null;
+            document.getElementById('btn-mode-install').classList.remove('selected-install');
+            document.getElementById('btn-mode-replace').classList.remove('selected-replace');
+            const scanBox = document.getElementById('asset-display-box');
+            scanBox.className = 'data-display-box locked';
+            scanBox.innerText = "[SELECT INSTALL OR REPLACE MODE ABOVE ]";
+            document.getElementById('select-berth-id').value = "";
+            document.getElementById('input-boat-name').value = "";
+        }
+
+        function renderLogs() {
+            const logBox = document.getElementById('gateway-log');
+            const data = localStorage.getItem("activeGateway");
+            if (!data) {
+                logBox.innerText = "No active gateway configuration initialized locally.";
+                return;
+            }
+            const parsed = JSON.parse(data);
+            logBox.innerText = `ACTIVE GW ID : ${parsed.gatewayId}\nLOCATION     : ${parsed.marinaName}\nALLOCATIONS  : ${parsed.berthCount} Max Berths\nINITIALIZED  : ${parsed.timestamp}`;
+        }
+
+        function updateBerthDropdown() {
+            const select = document.getElementById('select-berth-id');
+            const data = localStorage.getItem("activeGateway");
+            select.innerHTML = '<option value="" disabled selected>[ Select Berth ]</option>';
+            if (!data) return;
+            
+            const parsed = JSON.parse(data);
+            for (let i = 1; i <= parsed.berthCount; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = `Berth Number ${i}`;
+                select.appendChild(opt);
+            }
+            
+            select.onchange = function() {
+                const boatInput = document.getElementById('input-boat-name');
+                if (currentOperationMode === 'REPLACE') {
+                    const currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+                    const match = currentLedger.find(item => item.berthId === select.value);
+                    if (match && match.boatName && match.boatName !== "Unallocated Berth") {
+                        boatInput.value = match.boatName;
+                    } else {
+                        boatInput.value = "";
+                    }
+                } else {
+                    boatInput.value = "";
+                }
+            };
+        }
+
+        function renderAssetLedger() {
+            const container = document.getElementById('asset-ledger-list');
+            container.innerHTML = "";
+            const currentLedger = JSON.parse(localStorage.getItem("provisionedAssets")) || [];
+            
+            if (currentLedger.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:16px; color:#4e535e;">No hardware components mapped inside browser sandbox cache.</div>';
+                return;
+            }
+            
+            currentLedger.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "ledger-item";
+                
+                const badgeClass = item.utilityType === 'Water Meter' ? 'badge-water' : 'badge-elec';
+                const boatMeta = item.boatName !== "Unallocated Berth" ? `<span style="color:#30d158; font-size:11px;">🚢 Allocation: ${item.boatName}</span>` : '';
+                
+                row.innerHTML = `
+                    <div class="ledger-meta">
+                        <span class="ledger-title">Berth ${item.berthId} &rarr; <span style="color:#ff9e22;">${item.puckId}</span></span>
+                        ${boatMeta}
+                        <span class="ledger-subtitle">Stamping: ${item.timestamp}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="ledger-badge ${badgeClass}">${item.utilityType === 'Water Meter' ? 'Water' : 'Elec'}</span>
+                        <button class="btn-delete" onclick="deleteAssetRecord('${item.berthId}')">×</button>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function renderLifecycleHistory() {
+            const tbody = document.getElementById('history-log-rows');
+            
+            fetch(`${SUPABASE_BASE_URL}/lifecycle_events`, {
+                method: "GET",
+                headers: {
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`,
+                    "Accept-Profile": "public"
+                }
+            })
+            .then(res => {
+                if (!res.ok) throw new Error();
+                return res.json();
+            })
+            .then(data => {
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:16px; color:#4e535e;">No synchronized history tracks stored in remote database.</td></tr>';
+                    return;
+                }
+                
+                // Sort descending to show latest entries first
+                data.sort((a,b) => new Date(b.created_at || b.event_date) - new Date(a.created_at || a.event_date));
+                
+                tbody.innerHTML = "";
+                data.slice(0, 30).forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.event_date || ''}</td>
+                        <td>${row.event_time || ''}</td>
+                        <td style="font-weight:bold; color:${row.activity_type.includes('REPLACE') ? '#ff9e22' : '#30d158'}">${row.activity_type || ''}</td>
+                        <td>${row.location_id || ''}</td>
+                        <td>${row.utility_type || ''}</td>
+                        <td style="color:#ff9e22">${row.puck_id || ''}</td>
+                        <td style="color:#6c7380">${row.replaced_hardware_id || row.replacedHardwareId || '-'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:16px; color:#ff453a;">Failed to pull real-time database history events pipeline.</td></tr>';
+            });
+        }
+    </script>
 </body>
 </html>
