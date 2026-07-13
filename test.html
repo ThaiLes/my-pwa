@@ -6,8 +6,8 @@
     <title>Supabase Ledger Test Bench</title>
     <style>
         body { font-family: monospace; background: #1a1c20; color: #e2e4e9; padding: 20px; text-align: center; }
-        button { display: block; width: 100%; max-width: 300px; margin: 20px auto; padding: 15px; font-weight: bold; font-size: 16px; cursor: pointer; border: none; border-radius: 4px; }
-        #log { background: #000; color: #0f0; padding: 15px; text-align: left; max-width: 500px; margin: 20px auto; white-space: pre-wrap; font-size: 12px; min-height: 100px; border-radius: 4px; border: 1px solid #333; }
+        button { display: block; width: 100%; max-width: 300px; margin: 20px auto; padding: 15px; font-weight: bold; font-size: 16px; cursor: pointer; border: none; border-radius: 4px; color: white; }
+        #log { background: #000; color: #0f0; padding: 15px; text-align: left; max-width: 500px; margin: 20px auto; white-space: pre-wrap; font-size: 12px; min-height: 150px; border-radius: 4px; border: 1px solid #333; }
     </style>
 </head>
 <body>
@@ -15,81 +15,94 @@
     <h2>Supabase HIL Test Bench (Clean Slate)</h2>
     <p>Targeting default public schema ledger lines</p>
 
-    <button onclick="sendTestGateway()" style="background: #2ea043; color: white;">1. SEND TEST GATEWAY</button>
-    <button onclick="sendTestAsset()" style="background: #0076d6; color: white;">2. SEND TEST ASSET</button>
+    <button onclick="sendTestGateway()" style="background: #2ea043;">1. SEND TEST GATEWAY</button>
+    <button onclick="sendTestAsset()" style="background: #0076d6;">2. SEND TEST ASSET</button>
 
-    <h3>Console Output Log:</h3>
-    <div id="log">Awaiting action...</div>
+    <div id="log">Console Ready... Waiting for input activation.</div>
 
- <script>
-    const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
-    const PUBLIC_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
+    <script>
+        const SUPABASE_URL = "https://mzmvsyewpmaqwcfnqaas.supabase.co/rest/v1";
+        const PUBLIC_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16bXZzeWV3cG1hcXdjZm5xYWFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDM2MDcsImV4cCI6MjA5ODg3OTYwN30.DrQ483mzPm57vYacCZ9IIazOJnuh_E037AI7UMdE-vk";
 
-    function logMessage(msg) {
-        document.getElementById('log').innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-    }
+        function logMessage(msg) {
+            const logDiv = document.getElementById("log");
+            logDiv.innerText = `[${new Date().toLocaleTimeString()}] ${msg}\n` + logDiv.innerText;
+        }
 
-    // BUTTON 1: TARGET PUBLIC SCHEMA EXPLICITLY
-    function sendTestGateway() {
-        logMessage("Transmitting Gateway to public.site_registry...");
-        
-        const payload = {
-            gateway_id: "GW-CLEAN-SLATE-100", // Changed from 99 to 100
-            marina_name: "Fresh Start Marina",
-            max_berth_slots: 12
-        };
+        // BUTTON 1: PROVISION SITE GATEWAY
+        function sendTestGateway() {
+            logMessage("Transmitting Gateway payload to public.site_registry...");
 
-        fetch(`${SUPABASE_URL}/site_registry`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "apikey": PUBLIC_TOKEN,
-                "Authorization": `Bearer ${PUBLIC_TOKEN}`,
-                "Accept-Profile": "api",    // <-- Sync to your live api schema
-                "Content-Profile": "api"   // <-- Sync to your live api schema
-            },
-            body: JSON.stringify(payload)
-        })
-        .then(res => {
-            if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-            logMessage("SUCCESS: Gateway saved into public table registry!");
-        })
-        .catch(err => {
-            logMessage(`FAILED: ${err.message}`);
-        });
-    }
+            const payload = {
+                gateway_id: "GW-MARINA-02",
+                marina_name: "MANGO MARINA", // Unified matching string identifier
+                max_berth_slots: 50
+            };
 
-    // BUTTON 2: TARGET PUBLIC SCHEMA EXPLICITLY
-    function sendTestAsset() {
-    logMessage("Transmitting Asset to api.asset_ledger...");
+            fetch(`${SUPABASE_URL}/site_registry`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": PUBLIC_TOKEN,
+                    "Authorization": `Bearer ${PUBLIC_TOKEN}`,
+                    
+                    // 💡 FIXED: Pointing explicitly to your public schema profile structures
+                    "Accept-Profile": "public", 
+                    "Content-Profile": "public",
+                    "Prefer": "resolution=merge-duplicates, return=representation"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.message || `HTTP Error ${res.status}`);
+                }
+                logMessage(`SUCCESS: Gateway saved! Server Echo:\n${JSON.stringify(data)}`);
+            })
+            .catch(err => {
+                logMessage(`FAILED: ${err.message}`);
+                console.error(err);
+            });
+        }
 
-    // Double-check that these exact key names match your database columns perfectly!
-    const payload = {
-        berth_id: 2,
-        gateway_id: "GW-CLEAN-SLATE-100",
-        puck_id: "PUCK-FRESH-2",
-        utility_type: "Water Meter"
-    };
+        // BUTTON 2: PROVISION HARDWARE ASSET
+        function sendTestAsset() {
+            logMessage("Transmitting Asset payload to public.asset_ledger...");
 
-    fetch(`${SUPABASE_URL}/asset_ledger`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "apikey": PUBLIC_TOKEN,
-            "Authorization": `Bearer ${PUBLIC_TOKEN}`,
-            "Accept-Profile": "api",
-            "Content-Profile": "api"
-        },
-        body: JSON.stringify(payload)
-    })
-    .then(res => {
-        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-        logMessage("SUCCESS: Asset mapped onto asset ledger!");
-    })
-    .catch(err => {
-        logMessage(`FAILED: ${err.message}`);
-    });
-}
-</script>   
+            const payload = {
+                berth_id: 1,
+                gateway_id: "GW-MARINA-02",
+                puck_id: "2462",
+                utility_type: "Electricity"
+            };
+
+            fetch(`${SUPABASE_URL}/asset_ledger`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "apikey": PUBLIC_TOKEN,
+                    "Authorization": `Bearer ${PUBLIC_TOKEN}`,
+                    
+                    // 💡 FIXED: Pointing explicitly to your public schema profile structures
+                    "Accept-Profile": "public",
+                    "Content-Profile": "public",
+                    "Prefer": "resolution=merge-duplicates, return=representation"
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.message || `HTTP Error ${res.status}`);
+                }
+                logMessage(`SUCCESS: Asset mapped into Ledger!\n${JSON.stringify(data)}`);
+            })
+            .catch(err => {
+                logMessage(`FAILED: ${err.message}`);
+                console.error(err);
+            });
+        }
+    </script>
 </body>
 </html>
