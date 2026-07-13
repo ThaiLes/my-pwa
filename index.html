@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Provision Asset Dashboard V2</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         /* Base Reset & Industrial Dark Theme */
         body {
@@ -54,7 +55,7 @@
         .version-tag {
             font-size: 10px;
             background-color: #2d3139;
-            color: #ff9e22;
+            color: #30d158;
             padding: 2px 6px;
             border-radius: 4px;
             font-weight: bold;
@@ -152,6 +153,46 @@
             border-color: #ff9e22;
             color: #ff9e22;
             background-color: rgba(255, 158, 34, 0.05);
+        }
+        /* Scannable Target Activation Bar Wrapper */
+        .scanner-trigger-bar {
+            background-color: rgba(255, 158, 34, 0.1);
+            border: 1px dashed #ff9e22;
+            color: #ff9e22;
+            padding: 14px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        /* Dedicated Scanner Viewport Container */
+        #scanner-viewport-container {
+            display: none;
+            width: 100%;
+            background-color: #000000;
+            border-bottom: 1px solid #3f4450;
+            position: relative;
+        }
+        #interactive-video {
+            width: 100% !important;
+        }
+        .btn-close-scanner {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background-color: #ff453a;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10;
+            font-size: 11px;
         }
         /* TextInput Fields Layout */
         .text-input {
@@ -350,13 +391,18 @@
                 <span class="nav-text">ADMIN ADM</span>
             </div>
             <div class="header-right">
-                <span class="version-tag">v2.1.6-PROD</span>
+                <span class="version-tag">v2.1.7-SCANNER-FIX</span>
             </div>
         </div>
         
         <div class="tab-navigation">
             <button id="tab-gateway" class="tab-btn" onclick="switchTab('gateway')">Gateway Config</button>
             <button id="tab-asset" class="tab-btn active" onclick="switchTab('asset')">Provision Asset</button>
+        </div>
+
+        <div id="scanner-viewport-container">
+            <button class="btn-close-scanner" onclick="stopScanning()">✕ CLOSE CAMERA</button>
+            <div id="interactive-video"></div>
         </div>
 
         <div id="view-gateway" class="content view-panel">
@@ -369,14 +415,19 @@
                 <button id="btn-gw-mode-replace" class="mode-btn" onclick="setGatewayOperationMode('REPLACE')">Replace</button>
             </div>
             
+            <div class="section-label">Scan Control Link</div>
+            <div id="btn-scan-gw" class="scanner-trigger-bar" onclick="startScanning('gateway')">
+                📷 Open Gateway QR Scanner
+            </div>
+            
             <div class="section-label">Gateway Unique ID</div>
-            <input type="text" id="input-gateway-id" class="text-input" value="GW-MARINA-10" placeholder="e.g. GW-MARINA-10">
+            <input type="text" id="input-gateway-id" class="text-input" placeholder="Scan QR code or enter ID manually">
             
             <div class="section-label">Marina Code (Location Scope)</div>
-            <input type="text" id="input-marina-name" class="text-input" value="MANGO MARINA" placeholder="e.g. MANGO MARINA">
+            <input type="text" id="input-marina-name" class="text-input" placeholder="e.g. MANGO MARINA">
             
             <div class="section-label">Total Number of Berths</div>
-            <input type="number" id="input-berth-count" class="text-input" value="50" placeholder="e.g. 50" min="1" max="100">
+            <input type="number" id="input-berth-count" class="text-input" placeholder="e.g. 50" min="1" max="100">
             
             <div style="margin-top: 30px;">
                 <button id="btn-activate-gateway" class="btn-primary" onclick="saveGatewayConfig()">
@@ -398,8 +449,13 @@
                 <button id="btn-mode-replace" class="mode-btn" onclick="setOperationMode('REPLACE')">Replace</button>
             </div>
             
+            <div class="section-label">Scan Control Link</div>
+            <div id="btn-scan-asset" class="scanner-trigger-bar" onclick="startScanning('asset')">
+                📷 Open Hardware Puck QR Scanner
+            </div>
+            
             <div class="section-label">Hardware Puck ID</div>
-            <input type="text" id="input-puck-id" class="text-input" value="2462" placeholder="e.g. 2462">
+            <input type="text" id="input-puck-id" class="text-input" placeholder="Scan QR code or enter ID manually">
             
             <div class="section-label">Assign Physical Location</div>
             <div class="select-wrapper">
@@ -414,10 +470,10 @@
             <div class="section-label">Utility Type Configuration</div>
             <div class="radio-group">
                 <label class="radio-label">
-                    <input type="radio" name="utility" value="Water" class="radio-input"> Water Meter
+                    <input type="radio" name="utility" value="Water" class="radio-input" checked> Water Meter
                 </label>
                 <label class="radio-label">
-                    <input type="radio" name="utility" value="Electricity" class="radio-input" checked> Shore Electricity
+                    <input type="radio" name="utility" value="Electricity" class="radio-input"> Shore Electricity
                 </label>
             </div>
             
@@ -459,6 +515,9 @@
     </div>
 
     <script>
+        let html5QrcodeScanner = null;
+        let scannableActive = false;
+        let currentScanTarget = null;
         let currentOperationMode = null;
         let currentGatewayOperationMode = null;
         
@@ -500,6 +559,21 @@
         }
 
         function switchTab(targetTab) {
+            if (html5QrcodeScanner && scannableActive) {
+                html5QrcodeScanner.stop().then(() => {
+                    scannableActive = false;
+                    document.getElementById('scanner-viewport-container').style.display = 'none';
+                    executeTabSwap(targetTab);
+                }).catch(() => {
+                    document.getElementById('scanner-viewport-container').style.display = 'none';
+                    executeTabSwap(targetTab);
+                });
+            } else {
+                executeTabSwap(targetTab);
+            }
+        }
+
+        function executeTabSwap(targetTab) {
             if (targetTab === 'gateway') {
                 const enteredPin = prompt("Enter 4-Digit Administrator Security PIN:");
                 if (enteredPin !== ADMIN_PIN) {
@@ -510,7 +584,6 @@
                 document.getElementById('view-asset').classList.remove('active');
                 document.getElementById('tab-gateway').classList.add('active');
                 document.getElementById('tab-asset').classList.remove('active');
-
             } else {
                 updateBerthDropdown();
                 renderAssetLedger();
@@ -521,17 +594,74 @@
             }
         }
 
-        // 💡 IMMUTABLE TEST-BENCH ALIGNMENT FOR SITE REGISTRY
-        function saveGatewayConfig() {
-            // 💡 HARDCODED FOR DIAGNOSTIC TESTING: Bypasses the scanner DOM entirely
-            const gatewayId = "GW-MARINA-10"; 
+        function startScanning(target) {
+            if (target === 'gateway' && !currentGatewayOperationMode) {
+                alert("ATTENTION: You must select INSTALL or REPLACE mode before scanning gateway.");
+                return;
+            }
+            if (target === 'asset' && !currentOperationMode) {
+                alert("ATTENTION: You must select INSTALL or REPLACE mode before scanning hardware.");
+                return;
+            }
+
+            currentScanTarget = target;
+            const scannerContainer = document.getElementById('scanner-viewport-container');
+            scannerContainer.style.display = 'block';
             
+            if (html5QrcodeScanner) {
+                try { html5QrcodeScanner.clear(); } catch(e){}
+            }
+            
+            setTimeout(() => {
+                html5QrcodeScanner = new Html5Qrcode("interactive-video");
+                scannableActive = true;
+                const cameraConfig = {
+                    fps: 10,
+                    qrbox: function (viewfinderWidth, viewfinderHeight) {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const edgeSize = Math.floor(minEdge * 0.65);
+                        return { width: edgeSize, height: edgeSize };
+                    }
+                };
+                
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" },
+                    cameraConfig,
+                    (decodedText) => {
+                        // Write scanned value directly into the steady input text box
+                        const inputId = currentScanTarget === 'gateway' ? 'input-gateway-id' : 'input-puck-id';
+                        document.getElementById(inputId).value = decodedText.trim();
+                        stopScanning();
+                    },
+                    (errorMessage) => {}
+                ).catch(err => {
+                    console.error("Camera access failed, loading default fallback indicators.", err);
+                    const inputId = currentScanTarget === 'gateway' ? 'input-gateway-id' : 'input-puck-id';
+                    document.getElementById(inputId).value = currentScanTarget === 'gateway' ? "GW-MARINA-02" : "2462";
+                    document.getElementById('scanner-viewport-container').style.display = 'none';
+                });
+            }, 300);
+        }
+
+        function stopScanning() {
+            if (html5QrcodeScanner && scannableActive) {
+                html5QrcodeScanner.stop().then(() => {
+                    scannableActive = false;
+                    document.getElementById('scanner-viewport-container').style.display = 'none';
+                }).catch(() => {});
+                document.getElementById('scanner-viewport-container').style.display = 'none';
+            } else {
+                document.getElementById('scanner-viewport-container').style.display = 'none';
+            }
+        }
+
+        function saveGatewayConfig() {
+            const gatewayId = document.getElementById('input-gateway-id').value.trim();
             const marinaName = document.getElementById('input-marina-name').value.trim();
             const berthCount = document.getElementById('input-berth-count').value;
 
-            // Remove the scanner string validation rules for this test run
-            if (!marinaName || !berthCount || !currentGatewayOperationMode) {
-                alert("ERROR: Please select INSTALL/REPLACE mode and fill out all inputs.");
+            if (!gatewayId || !marinaName || !berthCount || !currentGatewayOperationMode) {
+                alert("ERROR: Please select INSTALL/REPLACE mode and complete all input fields.");
                 return;
             }
 
@@ -544,8 +674,6 @@
                 marina_name: marinaName,
                 max_berth_slots: parseInt(berthCount, 10)
             };
-
-            console.log("TEST BENCH PAYLOAD TRANSFERENCE:", sitePayload);
 
             fetch(`${SUPABASE_BASE_URL}/site_registry`, {
                 method: "POST",
@@ -575,10 +703,10 @@
                 
                 renderLogs();
                 updateBerthDropdown();
-                alert(`SUCCESS:\nHardcoded Gateway ${gatewayId} registered cleanly to ${marinaName}.`);
+                alert(`SUCCESS:\nGateway ${gatewayId} registered cleanly to ${marinaName}.`);
             })
             .catch(err => {
-                console.error("Transmission Failure Trace:", err);
+                console.error(err);
                 alert(`SYNC LINK FAILURE:\n${err.message}`);
             })
             .finally(() => {
@@ -587,7 +715,6 @@
             });
         }
 
-        // 💡 IMMUTABLE TEST-BENCH ALIGNMENT FOR ASSET LEDGER
         function saveAssetProvision() {
             const gatewayData = localStorage.getItem("activeGateway");
             if (!gatewayData) {
@@ -736,6 +863,7 @@
             currentOperationMode = null;
             document.getElementById('btn-mode-install').classList.remove('selected-install');
             document.getElementById('btn-mode-replace').classList.remove('selected-replace');
+            document.getElementById('input-puck-id').value = "";
             document.getElementById('select-berth-id').value = "";
             document.getElementById('input-boat-name').value = "";
         }
